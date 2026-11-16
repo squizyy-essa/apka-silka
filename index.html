@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pl" data-theme="light" data-style="minimal">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#f7f8fc" />
+    <meta name="description" content="Planer treningowy: plany, treningi, progresja i statystyki." />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <title>Training Planner</title>
+    <script>
+      // Applies the last used appearance before first paint (no flash of the
+      // wrong theme). localStorage holds only this small UI hint; the source
+      // of truth for settings is IndexedDB.
+      (function () {
+        var root = document.documentElement;
+        try {
+          var hint = JSON.parse(localStorage.getItem('tp.appearance') || 'null') || {};
+          var themes = ['light', 'dark', 'system'];
+          var styles = ['minimal', 'performance', 'pro-athlete'];
+          var theme = themes.indexOf(hint.theme) >= 0 ? hint.theme : 'light';
+          var style = styles.indexOf(hint.visualStyle) >= 0 ? hint.visualStyle : 'minimal';
+          if (theme === 'system') {
+            theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          }
+          root.setAttribute('data-theme', theme);
+          root.setAttribute('data-style', style);
+        } catch (error) {
+          root.setAttribute('data-theme', 'light');
+          root.setAttribute('data-style', 'minimal');
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>Ta aplikacja wymaga włączonej obsługi JavaScript.</noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

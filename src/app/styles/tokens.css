@@ -1,0 +1,129 @@
+/*
+ * Design tokens.
+ *
+ * Two independent axes, set as attributes on <html> (and on any element that
+ * wants to preview another combination, e.g. the style picker swatches):
+ *   data-theme = light | dark              (resolved from light/dark/system)
+ *   data-style = minimal | performance | pro-athlete
+ *
+ * Components never use raw colours – only the semantic names mapped in
+ * index.css (bg-surface, text-muted-foreground, …). Values are plain hex so
+ * the contrast test (tokens.test.ts) can verify every combination.
+ *
+ * Text tokens (text, text-muted, accent-text) meet WCAG AA 4.5:1 on bg,
+ * surface and surface-muted; primary-fg meets it on primary/primary-hover.
+ */
+
+/* ---- Status colours: shared by all styles, per theme ---- */
+:root,
+[data-theme='light'] {
+  --tp-success: #16a34a;
+  --tp-warning: #f59e0b;
+  --tp-danger: #dc2626;
+  --tp-danger-soft: #fdecec;
+  --tp-shadow-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 1px 3px rgb(16 24 40 / 0.06);
+  --tp-shadow-raised: 0 4px 16px rgb(16 24 40 / 0.1);
+}
+
+[data-theme='dark'] {
+  --tp-success: #4ade80;
+  --tp-warning: #fbbf24;
+  --tp-danger: #f87171;
+  --tp-danger-soft: #3a1d1f;
+  --tp-shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
+  --tp-shadow-raised: 0 4px 16px rgb(0 0 0 / 0.5);
+}
+
+/* ---- Minimal: blue-violet (default) ---- */
+:root,
+[data-style='minimal'][data-theme='light'] {
+  --tp-bg: #f7f8fc;
+  --tp-surface: #ffffff;
+  --tp-surface-muted: #eef0f7;
+  --tp-primary: #5267f4;
+  --tp-primary-hover: #4356d9;
+  --tp-primary-fg: #ffffff;
+  --tp-primary-soft: #e8ebfe;
+  --tp-accent-text: #3f51d0;
+  --tp-text: #171a24;
+  --tp-text-muted: #5c6577;
+  --tp-border: #e5e8ef;
+  --tp-ring: #5267f4;
+}
+
+[data-style='minimal'][data-theme='dark'] {
+  --tp-bg: #0f1117;
+  --tp-surface: #171a24;
+  --tp-surface-muted: #20242f;
+  --tp-primary: #8291ff;
+  --tp-primary-hover: #9ba7ff;
+  --tp-primary-fg: #0b0d14;
+  --tp-primary-soft: #232a4d;
+  --tp-accent-text: #a3aeff;
+  --tp-text: #f2f4f8;
+  --tp-text-muted: #a0a8b8;
+  --tp-border: #2a2f3d;
+  --tp-ring: #8291ff;
+}
+
+/* ---- Performance: lime accent ---- */
+[data-style='performance'][data-theme='light'] {
+  --tp-bg: #f6f7f2;
+  --tp-surface: #ffffff;
+  --tp-surface-muted: #eceee5;
+  --tp-primary: #4d7c0f;
+  --tp-primary-hover: #3f6212;
+  --tp-primary-fg: #ffffff;
+  --tp-primary-soft: #e7f5cc;
+  --tp-accent-text: #3f6212;
+  --tp-text: #14170f;
+  --tp-text-muted: #5d6657;
+  --tp-border: #e2e5da;
+  --tp-ring: #4d7c0f;
+}
+
+[data-style='performance'][data-theme='dark'] {
+  --tp-bg: #0b0d0a;
+  --tp-surface: #141712;
+  --tp-surface-muted: #1d211a;
+  --tp-primary: #a3e635;
+  --tp-primary-hover: #bef264;
+  --tp-primary-fg: #0b0d0a;
+  --tp-primary-soft: #26331a;
+  --tp-accent-text: #b4ec5a;
+  --tp-text: #f1f5ea;
+  --tp-text-muted: #a2ab96;
+  --tp-border: #2a2f25;
+  --tp-ring: #a3e635;
+}
+
+/* ---- Pro Athlete: sporty blue ---- */
+[data-style='pro-athlete'][data-theme='light'] {
+  --tp-bg: #f4f7fb;
+  --tp-surface: #ffffff;
+  --tp-surface-muted: #e9eef5;
+  --tp-primary: #0b6bcb;
+  --tp-primary-hover: #0957a8;
+  --tp-primary-fg: #ffffff;
+  --tp-primary-soft: #dcebfb;
+  --tp-accent-text: #0957a8;
+  --tp-text: #0f1b2d;
+  --tp-text-muted: #56667c;
+  --tp-border: #dce4ee;
+  --tp-ring: #0b6bcb;
+}
+
+[data-style='pro-athlete'][data-theme='dark'] {
+  --tp-bg: #0a1220;
+  --tp-surface: #111c2e;
+  --tp-surface-muted: #19273d;
+  --tp-primary: #3fa7ff;
+  --tp-primary-hover: #6bbaff;
+  --tp-primary-fg: #06101d;
+  --tp-primary-soft: #16324f;
+  --tp-accent-text: #6bbaff;
+  --tp-text: #edf3fb;
+  --tp-text-muted: #9babc2;
+  --tp-border: #22324a;
+  --tp-ring: #3fa7ff;
+}

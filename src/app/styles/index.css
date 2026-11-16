@@ -1,0 +1,83 @@
+@import 'tailwindcss';
+@import './tokens.css';
+
+/* Remove Tailwind's stock palette: only semantic tokens are available as
+   utilities, so a hard-coded colour cannot sneak into a component. */
+@theme {
+  --color-*: initial;
+
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
+
+  --radius-card: 1rem;
+  --radius-control: 0.75rem;
+}
+
+@theme inline {
+  --color-background: var(--tp-bg);
+  --color-surface: var(--tp-surface);
+  --color-surface-muted: var(--tp-surface-muted);
+  --color-foreground: var(--tp-text);
+  --color-muted-foreground: var(--tp-text-muted);
+  --color-border: var(--tp-border);
+  --color-primary: var(--tp-primary);
+  --color-primary-hover: var(--tp-primary-hover);
+  --color-primary-foreground: var(--tp-primary-fg);
+  --color-primary-soft: var(--tp-primary-soft);
+  --color-accent-text: var(--tp-accent-text);
+  --color-success: var(--tp-success);
+  --color-warning: var(--tp-warning);
+  --color-danger: var(--tp-danger);
+  --color-danger-soft: var(--tp-danger-soft);
+  --color-ring: var(--tp-ring);
+
+  --shadow-card: var(--tp-shadow-card);
+  --shadow-raised: var(--tp-shadow-raised);
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html[data-theme='dark'] {
+    color-scheme: dark;
+  }
+
+  body {
+    min-height: 100dvh;
+    background-color: var(--tp-bg);
+    color: var(--tp-text);
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overflow-wrap: break-word;
+  }
+
+  /* One consistent, always-visible keyboard focus indicator. */
+  :focus-visible {
+    outline: 2px solid var(--tp-ring);
+    outline-offset: 2px;
+  }
+
+  button,
+  a,
+  [role='radio'] {
+    touch-action: manipulation;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
