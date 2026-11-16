@@ -4,7 +4,7 @@ Aplikacja do planowania i zapisywania treningów siłowych. Działa w przegląda
 i komputerze, bez konta i bez serwera – dane są zapisywane lokalnie na urządzeniu.
 
 > **Stan projektu:** ukończona faza 1 z 8 (fundament). Działa szkielet aplikacji, nawigacja,
-> motywy i trwały zapis ustawień. Plany, treningi, statystyki i instalacja jako PWA są w budowie.
+> motywy, trwały zapis ustawień i instalacja na ekranie początkowym. Plany, treningi i statystyki są w budowie.
 > Szczegóły: [`PROJECT_PROGRESS.md`](PROJECT_PROGRESS.md), plan: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ## Wymagania
@@ -45,11 +45,17 @@ sprawdza projekt i publikuje go. Jednorazowo trzeba włączyć Pages:
 **Settings → Pages → Build and deployment → Source: „GitHub Actions”**.
 Adres aplikacji: `https://<użytkownik>.github.io/<repozytorium>/`.
 
-## Instalowanie na telefonie (PWA)
+## Instalowanie na telefonie
 
-Pełna instalacja (ikona, tryb pełnoekranowy, manifest, service worker) jest zaplanowana na
-fazę 8 i **jeszcze nie jest wdrożona**. Do tego czasu aplikację można otwierać w przeglądarce
-pod jej adresem.
+**iPhone / iPad:** otwórz adres aplikacji w **Safari** → przycisk Udostępnij → „Dodaj do ekranu
+początkowego”. Aplikacja dostaje własną ikonę i otwiera się na pełnym ekranie.
+
+**Android (Chrome):** menu ⋮ → „Dodaj do ekranu głównego” / „Zainstaluj aplikację”.
+
+Aplikacja uruchomiona z ikony ma na iPhonie **osobne dane** niż ta sama strona w Safari.
+
+Jeszcze niewdrożone (faza 8): service worker, działanie bez internetu i komunikat o aktualizacji.
+Do uruchomienia aplikacji potrzebne jest połączenie z internetem.
 
 ## Przechowywanie danych
 
@@ -70,5 +76,5 @@ Eksport i import kopii zapasowej (JSON) są zaplanowane na fazę 7 i **jeszcze n
   jeszcze wdrożone – ich ekrany mówią o tym wprost.
 - iOS: Safari i aplikacja dodana do ekranu początkowego mają osobne dane. Safari może usunąć dane
   strony nieużywanej przez 7 dni (nie dotyczy aplikacji z ekranu początkowego).
-- Brak trybu offline i powiadomień (faza 8 i 7).
+- Brak trybu offline i powiadomień (faza 8 i 7); start aplikacji wymaga internetu.
 - Pełna lista ryzyk: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#7-ryzyka-i-ograniczenia-platformy).

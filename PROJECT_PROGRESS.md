@@ -4,7 +4,7 @@ Ten plik jest pamięcią projektu między sesjami pracy. **Na początku każdej 
 go w całości, potem `docs/ARCHITECTURE.md`, i dopiero wtedy zmieniaj kod.** Po każdej fazie
 zaktualizuj wszystkie sekcje.
 
-Ostatnia aktualizacja: 2026-11-16 (koniec fazy 1).
+Ostatnia aktualizacja: 2026-11-16 (faza 1 ukończona; z fazy 8 przeniesiono instalację na ekranie początkowym).
 
 ## Jak wznowić pracę
 
@@ -48,13 +48,28 @@ Co rzeczywiście działa:
 - **Obsługa błędów:** brak dostępu do bazy przy starcie → czytelny ekran z „Spróbuj ponownie”;
   nieudany zapis ustawienia → komunikat, a ekran dalej pokazuje stan faktyczny.
 
+### Z fazy 8 przeniesione wcześniej: instalacja na ekranie początkowym ✅ (2026-11-16)
+
+Na prośbę właściciela, żeby oglądać postępy na iPhonie z ikony.
+
+- `public/manifest.webmanifest` (nazwa, `display: standalone`, adresy względne), ikony PNG
+  192/512 (zwykłe i maskable) oraz `apple-touch-icon` 180 px, meta tagi iOS w `index.html`.
+- Ikony generuje `node scripts/generate-icons.mjs` z `scripts/icon.svg` (własna grafika).
+- Testy e2e `e2e/install.spec.ts`: manifest, rozmiary ikon, znaczniki iOS.
+- **Nadal w fazie 8:** service worker, cache/offline, komunikat o aktualizacji, prośba o trwałe
+  przechowywanie, podział kodu. Bez service workera aplikacja wymaga internetu przy starcie.
+- Niesprawdzone przeze mnie: faktyczne dodanie do ekranu początkowego na iPhonie (wymaga
+  urządzenia) – do potwierdzenia przez właściciela.
+- Ekran startowy i pasek stanu w trybie pełnoekranowym mają stały jasny kolor z manifestu,
+  niezależnie od wybranego motywu.
+
 Czego **nie ma** (ekrany mówią o tym wprost i nie mają żadnych kontrolek):
 
 - Pulpit, Plany, Trening, Historia – tylko informacja „moduł nie jest jeszcze wdrożony”.
 - W Ustawieniach działa tylko sekcja Wygląd; timer, przypomnienia i backup – faza 7.
 - Tabele bazy poza `appSettings` istnieją, ale aplikacja jeszcze nic do nich nie zapisuje
   (zapis/odczyt/migracja tych tabel są sprawdzone tylko w testach).
-- PWA (manifest, ikony, service worker, instalacja) – faza 8.
+- Service worker, tryb offline i obsługa aktualizacji – faza 8 (manifest i ikony już są).
 
 ## Wyniki testów (2026-11-16, koniec fazy 1)
 
@@ -64,10 +79,10 @@ Czego **nie ma** (ekrany mówią o tym wprost i nie mają żadnych kontrolek):
 | ESLint | `npm run lint` | 0 błędów, 0 ostrzeżeń |
 | Testy jednostkowe i komponentowe | `npm test` | 90 / 90 (6 plików) |
 | Build produkcyjny | `npm run build` | OK – JS 590 kB (185 kB gzip), CSS 22 kB (5,5 kB gzip) |
-| Testy e2e (Chrome, build produkcyjny) | `npm run test:e2e` | 13 / 13 |
+| Testy e2e (Chrome, build produkcyjny) | `npm run test:e2e` | 16 / 16 |
 | Build pod podścieżką (jak GitHub Pages) | ręcznie | działa, zapis ustawień OK, 0 błędów konsoli |
 | GitHub Actions – zadanie `check-and-build` | automatycznie po pushu | OK (typy, lint, testy, build na serwerach GitHuba) |
-| GitHub Actions – zadanie `deploy` | automatycznie po pushu | błąd 404: GitHub Pages nie jest jeszcze włączone w repozytorium |
+| GitHub Actions – zadanie `deploy` | automatycznie po pushu | OK po włączeniu Pages; aplikacja: https://squizyy-essa.github.io/apka-silka/ |
 
 Zakres testów: walidacja domenowa (§18), tworzenie tabel, trwałość po ponownym otwarciu bazy,
 migracja z zachowaniem danych, wycofanie nieudanej migracji, odmowa otwarcia nowszej bazy,
@@ -80,8 +95,8 @@ klawiatura, brak mignięcia motywu, brak błędów w konsoli.
 Dodatkowo sprawdzone ręcznie: celowe zepsucie zapisu ustawień powoduje, że 4 testy nie przechodzą
 (testy naprawdę pilnują trwałości).
 
-Niesprawdzone: prawdziwy iPhone / Safari (testy e2e działają w Chrome); publikacja na GitHub
-Pages (czeka na włączenie Pages przez właściciela).
+Niesprawdzone: prawdziwy iPhone / Safari (testy e2e działają w Chrome). Właściciel potwierdził,
+że opublikowana strona się otwiera.
 
 ## Decyzje architektoniczne
 
@@ -141,7 +156,6 @@ Fazy 3–8 według tabeli w `docs/ARCHITECTURE.md` §6.
 
 ## Do zrobienia przez właściciela projektu
 
-- [ ] Włączyć GitHub Pages: repozytorium → **Settings → Pages → Source: „GitHub Actions”**,
-      potem w zakładce **Actions** uruchomić ponownie workflow „Check and deploy”
-      (pierwsze uruchomienie przed włączeniem Pages kończy się błędem na etapie publikacji – to
-      oczekiwane). Adres: `https://squizyy-essa.github.io/apka-silka/`.
+- [x] Włączyć GitHub Pages (zrobione 2026-11-16; każdy push do `main` publikuje aplikację).
+- [ ] Na iPhonie: otworzyć https://squizyy-essa.github.io/apka-silka/ w Safari → Udostępnij →
+      „Dodaj do ekranu początkowego” i potwierdzić, że ikona i pełny ekran działają.
