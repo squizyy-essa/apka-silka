@@ -54,7 +54,10 @@ początkowego”. Aplikacja dostaje własną ikonę i otwiera się na pełnym ek
 
 Aplikacja uruchomiona z ikony ma na iPhonie **osobne dane** niż ta sama strona w Safari.
 
-Jeszcze niewdrożone (faza 8): service worker, działanie bez internetu i komunikat o aktualizacji.
+Gdy zostanie opublikowana nowsza wersja, aplikacja pokaże pasek „Dostępna jest nowsza wersja”
+z przyciskiem „Odśwież” (sama się nie przeładowuje).
+
+Jeszcze niewdrożone (faza 8): service worker i działanie bez internetu.
 Do uruchomienia aplikacji potrzebne jest połączenie z internetem.
 
 ## Przechowywanie danych

@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 import { NavLink, Outlet, ScrollRestoration, useMatches } from 'react-router';
 import { cn } from '@/shared/lib/cn';
 import { APP_NAME, NAV_ITEMS } from './navigation';
+import { UpdateBanner } from './update/UpdateBanner';
 
 interface RouteHandle {
   readonly title?: string;
@@ -124,6 +125,7 @@ export function AppShell() {
         className="pt-[env(safe-area-inset-top)] pb-[calc(4.5rem+env(safe-area-inset-bottom))] outline-none lg:pb-0 lg:pl-60"
       >
         <div className="mx-auto w-full max-w-5xl px-4 py-5 sm:px-6 lg:px-8 lg:py-8">
+          <UpdateBanner />
           <Outlet />
         </div>
       </main>

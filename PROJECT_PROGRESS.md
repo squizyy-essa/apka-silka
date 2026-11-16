@@ -63,6 +63,21 @@ Na prośbę właściciela, żeby oglądać postępy na iPhonie z ikony.
 - Ekran startowy i pasek stanu w trybie pełnoekranowym mają stały jasny kolor z manifestu,
   niezależnie od wybranego motywu.
 
+### Z fazy 8 przeniesione wcześniej: powiadomienie o aktualizacji ✅ (2026-11-16)
+
+Powód: aplikacja uruchomiona z ikony na iPhonie pokazywała starą wersję (telefon trzyma ją w
+pamięci, a w trybie pełnoekranowym nie ma przycisku odświeżania).
+
+- Build zapisuje `version.json` (`version`, unikalny `buildId`) – wtyczka w `vite.config.ts`.
+- `src/app/update/`: sprawdzenie przy starcie, po powrocie aplikacji na ekran i co 30 min
+  (nie częściej niż raz na minutę), z pominięciem pamięci podręcznej. Gdy opublikowany build
+  jest inny → pasek „Dostępna jest nowsza wersja” z „Odśwież” i „Później”.
+- Aplikacja nigdy nie przeładowuje się sama (wymóg §16: nie przerywać aktywnego treningu).
+  Brak internetu lub błąd sprawdzenia = brak paska.
+- Niesprawdzone na iPhonie; pierwsze przejście ze starej wersji (bez tego mechanizmu) nadal
+  wymaga ręcznego zamknięcia aplikacji.
+- Nadal w fazie 8: service worker i tryb offline.
+
 ### Faza 2 – Biblioteka ćwiczeń ✅ (2026-11-16)
 
 Kryterium: „można utworzyć, znaleźć, edytować i ponownie odczytać ćwiczenie po odświeżeniu
@@ -106,7 +121,7 @@ Czego **nie ma** (ekrany mówią o tym wprost i nie mają żadnych kontrolek):
 - Pulpit, Trening, Historia oraz plany treningowe w sekcji Plany – tylko informacja
   „nie jest jeszcze wdrożone”.
 - W Ustawieniach działa tylko sekcja Wygląd; timer, przypomnienia i backup – faza 7.
-- Service worker, tryb offline i obsługa aktualizacji – faza 8 (manifest i ikony już są).
+- Service worker i tryb offline – faza 8 (manifest, ikony i powiadomienie o aktualizacji już są).
 
 ## Wyniki testów (2026-11-16, koniec fazy 2)
 
@@ -114,9 +129,9 @@ Czego **nie ma** (ekrany mówią o tym wprost i nie mają żadnych kontrolek):
 |---|---|---|
 | TypeScript strict | `npm run typecheck` | 0 błędów |
 | ESLint | `npm run lint` | 0 błędów, 0 ostrzeżeń |
-| Testy jednostkowe i komponentowe | `npm test` | 125 / 125 (9 plików) |
+| Testy jednostkowe i komponentowe | `npm test` | 134 / 134 (10 plików) |
 | Build produkcyjny | `npm run build` | OK – JS 710 kB (223 kB gzip) |
-| Testy e2e (Chrome, build produkcyjny) | `npm run test:e2e` | 25 / 25 |
+| Testy e2e (Chrome, build produkcyjny) | `npm run test:e2e` | 28 / 28 |
 | Build pod podścieżką (jak GitHub Pages) | ręcznie | działa, zapis ustawień OK, 0 błędów konsoli |
 | GitHub Actions – zadanie `check-and-build` | automatycznie po pushu | OK (typy, lint, testy, build na serwerach GitHuba) |
 | GitHub Actions – zadanie `deploy` | automatycznie po pushu | OK po włączeniu Pages; aplikacja: https://squizyy-essa.github.io/apka-silka/ |
