@@ -299,9 +299,9 @@ Uzasadnienia w `docs/ARCHITECTURE.md` (§2 „Odstępstwa”).
 - Test klawiatury w e2e przytrzymuje strzałkę (`down`/`up`), bo grupa radio Radix wybiera opcję
   przy fokusie tylko wtedy, gdy klawisz jest wciśnięty; błyskawiczne syntetyczne naciśnięcie
   byłoby pominięte. Prawdziwej klawiatury to nie dotyczy.
-- Test komponentowy „sets another plan as primary…” (`plans.test.tsx`) raz na kilkanaście
-  uruchomień nie przeszedł; przyczyna nieustalona (prawdopodobnie zależność czasowa w teście).
-  Obserwować; jeśli się powtórzy – zdiagnozować.
+- Testy komponentowe planów bywały niestabilne na wolniejszych maszynach (raz lokalnie, raz na
+  GitHubie): pomocnik testowy nie czekał na zapis dodanego ćwiczenia, a limit oczekiwania
+  wynosił 1 s. Poprawione (czekanie na pojawienie się ćwiczenia, limit 4 s). Obserwować.
 - Test e2e zmiany kolejności klawiaturą ma krótką pauzę po „podniesieniu” elementu: biblioteka
   dnd-kit potrzebuje chwili na pomiar wierszy, zanim przyjmie strzałkę.
 - Workflow używa akcji `actions/*@v4` (`upload-pages-artifact@v3`), które GitHub oznacza jako

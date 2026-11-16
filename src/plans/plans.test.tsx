@@ -36,8 +36,12 @@ async function addExercise(user: UserEvent, search: string, name: RegExp) {
   await user.click(await screen.findByRole('button', { name: 'Dodaj ćwiczenie' }));
   const dialog = within(await screen.findByRole('dialog'));
   await user.type(dialog.getByRole('searchbox', { name: 'Szukaj po nazwie' }), search);
-  await user.click(await dialog.findByRole('button', { name }));
+  const option = await dialog.findByRole('button', { name });
+  const exerciseName = option.querySelector('span span')?.textContent ?? '';
+  await user.click(option);
   await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  // The exercise is saved asynchronously: wait until it is really in the day.
+  await screen.findByRole('article', { name: exerciseName });
 }
 
 describe('training plans', () => {
