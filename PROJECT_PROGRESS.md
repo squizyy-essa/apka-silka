@@ -66,6 +66,8 @@ Czego **nie ma** (ekrany mówią o tym wprost i nie mają żadnych kontrolek):
 | Build produkcyjny | `npm run build` | OK – JS 590 kB (185 kB gzip), CSS 22 kB (5,5 kB gzip) |
 | Testy e2e (Chrome, build produkcyjny) | `npm run test:e2e` | 13 / 13 |
 | Build pod podścieżką (jak GitHub Pages) | ręcznie | działa, zapis ustawień OK, 0 błędów konsoli |
+| GitHub Actions – zadanie `check-and-build` | automatycznie po pushu | OK (typy, lint, testy, build na serwerach GitHuba) |
+| GitHub Actions – zadanie `deploy` | automatycznie po pushu | błąd 404: GitHub Pages nie jest jeszcze włączone w repozytorium |
 
 Zakres testów: walidacja domenowa (§18), tworzenie tabel, trwałość po ponownym otwarciu bazy,
 migracja z zachowaniem danych, wycofanie nieudanej migracji, odmowa otwarcia nowszej bazy,
@@ -78,8 +80,8 @@ klawiatura, brak mignięcia motywu, brak błędów w konsoli.
 Dodatkowo sprawdzone ręcznie: celowe zepsucie zapisu ustawień powoduje, że 4 testy nie przechodzą
 (testy naprawdę pilnują trwałości).
 
-Niesprawdzone: prawdziwy iPhone / Safari (testy e2e działają w Chrome); workflow GitHub Actions
-(pierwsze uruchomienie nastąpi po pushu).
+Niesprawdzone: prawdziwy iPhone / Safari (testy e2e działają w Chrome); publikacja na GitHub
+Pages (czeka na włączenie Pages przez właściciela).
 
 ## Decyzje architektoniczne
 
@@ -108,6 +110,8 @@ Uzasadnienia w `docs/ARCHITECTURE.md` (§2 „Odstępstwa”).
 - Test klawiatury w e2e przytrzymuje strzałkę (`down`/`up`), bo grupa radio Radix wybiera opcję
   przy fokusie tylko wtedy, gdy klawisz jest wciśnięty; błyskawiczne syntetyczne naciśnięcie
   byłoby pominięte. Prawdziwej klawiatury to nie dotyczy.
+- Workflow używa akcji `actions/*@v4` (`upload-pages-artifact@v3`), które GitHub oznacza jako
+  oparte na przestarzałym Node 20 (na razie tylko ostrzeżenie). Do podniesienia wersji akcji.
 - iOS: osobne dane dla Safari i aplikacji z ekranu początkowego; możliwe czyszczenie danych
   nieużywanej strony w Safari. Do zaadresowania w fazach 7–8 (backup, instalacja, trwałe
   przechowywanie).
