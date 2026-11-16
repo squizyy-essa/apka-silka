@@ -1,19 +1,21 @@
-import { PageHeader } from '@/shared/ui/PageHeader';
-import { PlannedModuleNotice } from '@/shared/ui/PlannedModuleNotice';
+import { ErrorAlert, LoadingState } from '@/shared/ui/states';
+import { ActiveWorkout } from './ActiveWorkout';
+import { StartWorkout } from './StartWorkout';
+import { useActiveSession } from './useActiveSession';
 
+/** "Trening": the workout in progress if there is one, otherwise the start chooser. */
 export function WorkoutPage() {
-  return (
-    <>
-      <PageHeader title="Trening" />
-      <PlannedModuleNotice
-        phase={4}
-        scope={[
-          'start treningu z planu lub pustego treningu',
-          'zapisywanie każdej serii od razu po jej zakończeniu',
-          'timer odpoczynku i wznawianie przerwanej sesji',
-          'sugestie progresji ciężaru i powtórzeń (faza 5)',
-        ]}
-      />
-    </>
+  const active = useActiveSession();
+
+  if (active.status === 'loading') {
+    return <LoadingState label="Wczytywanie treningu…" />;
+  }
+  if (active.status === 'error') {
+    return <ErrorAlert title="Nie udało się wczytać treningu">{active.message}</ErrorAlert>;
+  }
+  return active.value === null ? (
+    <StartWorkout />
+  ) : (
+    <ActiveWorkout key={active.value.session.id} detail={active.value} />
   );
 }

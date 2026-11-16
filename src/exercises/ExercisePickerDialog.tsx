@@ -16,13 +16,16 @@ export interface ExercisePickerDialogProps {
   readonly title: string;
   /** Exercises that cannot be chosen (e.g. already used as alternatives). */
   readonly excludedIds?: readonly string[] | undefined;
+  /** Listed first under their own heading while nothing is being searched (e.g. plan alternatives). */
+  readonly suggested?: { readonly heading: string; readonly ids: readonly string[] } | undefined;
   readonly onPick: (exercise: Exercise) => void;
 }
 
 function PickerBody({
   excludedIds,
+  suggested,
   onPick,
-}: Pick<ExercisePickerDialogProps, 'excludedIds' | 'onPick'>) {
+}: Pick<ExercisePickerDialogProps, 'excludedIds' | 'suggested' | 'onPick'>) {
   const library = useExerciseLibrary();
   const [query, setQuery] = useState('');
   const [muscle, setMuscle] = useState('');
@@ -38,6 +41,30 @@ function PickerBody({
       muscle: parsedMuscle.success ? parsedMuscle.data : undefined,
     }).filter((exercise) => !excluded.has(exercise.id));
   }, [library, query, muscle, excludedIds]);
+
+  const suggestions =
+    library.status === 'ready' && suggested !== undefined && query.trim() === '' && muscle === ''
+      ? suggested.ids.flatMap(
+          (id) => library.exercises.find((exercise) => exercise.id === id) ?? [],
+        )
+      : [];
+  const option = (exercise: Exercise) => (
+    <li key={exercise.id}>
+      <button
+        type="button"
+        onClick={() => onPick(exercise)}
+        className="flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left transition-colors duration-150 hover:bg-surface-muted"
+      >
+        <ExerciseThumbnail imageId={exercise.imageId} className="size-10" />
+        <span className="min-w-0 flex-1">
+          <span className="block font-medium text-foreground">{exercise.name}</span>
+          <span className="block text-sm text-muted-foreground">
+            {MUSCLE_LABELS[exercise.primaryMuscle]} · {EQUIPMENT_LABELS[exercise.equipment]}
+          </span>
+        </span>
+      </button>
+    </li>
+  );
 
   return (
     <>
@@ -67,27 +94,16 @@ function PickerBody({
             {library.message}
           </ErrorAlert>
         )}
+        {suggestions.length > 0 && suggested !== undefined && (
+          <section aria-label={suggested.heading} className="border-b border-border bg-primary-soft">
+            <h3 className="px-4 pt-3 text-sm font-semibold text-foreground">{suggested.heading}</h3>
+            <ul className="divide-y divide-border">{suggestions.map(option)}</ul>
+          </section>
+        )}
         {library.status === 'ready' &&
           (results.length > 0 ? (
             <ul aria-label="Ćwiczenia do wyboru" className="divide-y divide-border">
-              {results.map((exercise) => (
-                <li key={exercise.id}>
-                  <button
-                    type="button"
-                    onClick={() => onPick(exercise)}
-                    className="flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left transition-colors duration-150 hover:bg-surface-muted"
-                  >
-                    <ExerciseThumbnail imageId={exercise.imageId} className="size-10" />
-                    <span className="min-w-0 flex-1">
-                      <span className="block font-medium text-foreground">{exercise.name}</span>
-                      <span className="block text-sm text-muted-foreground">
-                        {MUSCLE_LABELS[exercise.primaryMuscle]} ·{' '}
-                        {EQUIPMENT_LABELS[exercise.equipment]}
-                      </span>
-                    </span>
-                  </button>
-                </li>
-              ))}
+              {results.map(option)}
             </ul>
           ) : (
             <p className="p-6 text-center text-sm text-muted-foreground">
@@ -105,6 +121,7 @@ export function ExercisePickerDialog({
   onOpenChange,
   title,
   excludedIds,
+  suggested,
   onPick,
 }: ExercisePickerDialogProps) {
   return (
@@ -124,7 +141,7 @@ export function ExercisePickerDialog({
             </Dialog.Close>
           </div>
           {/* Mounted only while open, so search text resets between uses. */}
-          {open && <PickerBody excludedIds={excludedIds} onPick={onPick} />}
+          {open && <PickerBody excludedIds={excludedIds} suggested={suggested} onPick={onPick} />}
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

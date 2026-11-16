@@ -283,6 +283,8 @@ export interface SessionRepository {
   removeExercise(sessionExerciseId: string): Promise<void>;
   reorderExercises(sessionId: string, orderedIds: readonly string[]): Promise<void>;
   updateExerciseNotes(sessionExerciseId: string, notes: string | undefined): Promise<void>;
+  /** Changes the rest used after this exercise's sets, for this workout only. */
+  updateExerciseRest(sessionExerciseId: string, restSeconds: number): Promise<void>;
 
   /**
    * Ends the workout: sets still pending become skipped, the end time is

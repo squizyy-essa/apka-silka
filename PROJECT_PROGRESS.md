@@ -4,7 +4,7 @@ Ten plik jest pamięcią projektu między sesjami pracy. **Na początku każdej 
 go w całości, potem `docs/ARCHITECTURE.md`, i dopiero wtedy zmieniaj kod.** Po każdej fazie
 zaktualizuj wszystkie sekcje.
 
-Ostatnia aktualizacja: 2026-11-16 (ukończone fazy 1–3; z fazy 8 przeniesiono instalację na ekranie początkowym i powiadomienie o aktualizacji).
+Ostatnia aktualizacja: 2026-11-16 (ukończone fazy 1–4; z fazy 8 przeniesiono instalację na ekranie początkowym i powiadomienie o aktualizacji).
 
 ## Jak wznowić pracę
 
@@ -13,7 +13,7 @@ Ostatnia aktualizacja: 2026-11-16 (ukończone fazy 1–3; z fazy 8 przeniesiono 
    `docs/ARCHITECTURE.md`.
 2. `npm install`, potem `npm run check` i `npm run test:e2e` – wszystko musi być zielone, zanim
    zaczniesz cokolwiek zmieniać.
-3. Następna faza do zrobienia: **faza 4 – aktywny trening** (lista zadań niżej).
+3. Następna faza do zrobienia: **faza 5 – progresja** (lista zadań niżej).
 4. Zasady, których nie wolno łamać: żadnych makiet ani fikcyjnych danych; widoczna kontrolka =
    działająca funkcja; zapis do IndexedDB, nie do stanu komponentu; wydanej wersji schematu bazy
    się nie edytuje (nowa wersja + migracja); funkcja jest „ukończona” dopiero po testach.
@@ -170,21 +170,73 @@ Ograniczenia tej fazy:
 - Zmiana trybu ze stałego na elastyczny zachowuje przypisane dni tygodnia w danych (wracają po
   przełączeniu z powrotem), ale ich nie pokazuje.
 
+### Faza 4 – Aktywny trening ✅ (2026-11-16)
+
+Kryterium: „użytkownik może wykonać pełny trening, zamknąć aplikację, wznowić sesję i zachować
+wszystkie wyniki” – spełnione; testy akceptacyjne B i F przechodzą w prawdziwej przeglądarce.
+
+Co rzeczywiście działa:
+
+- **Start:** z dnia planu (zakładka Trening lub „Najbliższy trening” na Pulpicie) albo pusty
+  trening. Sesja dostaje migawkę planu; późniejsza edycja lub usunięcie planu jej nie zmienia.
+  Jedna aktywna sesja naraz (pilnowane w transakcji, także dla dwóch kart).
+- **Zapis serii:** każde pole (ciężar, powtórzenia, RIR, czas, dystans) zapisuje się od razu,
+  niezależnie od zakończenia serii i treningu. Wartości planowane są tylko podpowiedzią w pustym
+  polu. Przy „wykonana” niewpisany ciężar = ciężar z planu; powtórzenia trzeba wpisać, jeśli plan
+  to zakres (np. 8–12) – aplikacja nie zgaduje wyniku. Brak RIR zostaje brakiem danych.
+- **Statusy:** oczekująca, wykonana, nieudana (z rzeczywistym wynikiem obok planu), pominięta;
+  cofanie. Dodawanie i usuwanie serii.
+- **Ćwiczenia w trakcie:** dodanie z biblioteki, pominięcie i przywrócenie, zamiana (najpierw
+  zamienniki z planu; tylko zanim wykonano serię), usunięcie (jw.), kolejność z menu, notatka,
+  zmiana przerwy. Plan nie jest zmieniany.
+- **Dwa widoki:** tabela (każda seria wierszem) i karty (jedna duża karta serii, sama przechodzi
+  do następnej, w superserii rundami). Przełączanie bez utraty danych; wybór zapamiętany.
+- **Poprzedni wynik:** domyślnie ukryty; po dotknięciu pokazuje ostatni zakończony trening z tym
+  samym ćwiczeniem (po identyfikatorze, nie po nazwie).
+- **Timer odpoczynku:** startuje po serii wykonanej lub nieudanej; w superserii dopiero po całej
+  rundzie. Liczony ze znacznika czasu zakończenia (poprawny po powrocie z tła i po ponownym
+  otwarciu aplikacji), pauza, wznowienie, ±15 s, pominięcie, sygnał dźwiękowy (Web Audio) z
+  informacją, gdy przeglądarka go zablokuje.
+- **Wznawianie:** przy starcie aplikacji z niedokończoną sesją pytanie „Czy chcesz wznowić
+  trening?” (Wznów / Porzuć z potwierdzeniem). W trakcie treningu można chodzić po innych
+  ekranach – pasek „Trening w toku” prowadzi z powrotem.
+- **Zakończenie:** okno z liczbą serii, objętością, ostrzeżeniem przy braku wykonanych serii,
+  samopoczuciem 1–5 i notatką; niewykonane serie zapisują się jako pominięte. Potem
+  podsumowanie: czasy, łączny czas, ćwiczenia, serie, objętość robocza, partie, zapis serii.
+- **Pulpit:** najbliższy trening planu głównego (stały: wg dnia tygodnia; elastyczny: następny po
+  ostatnim *zakończonym*), szybki start, wznowienie.
+- **Biblioteka:** sekcja „Ostatnio używane” pokazuje się, gdy są treningi.
+
+Ograniczenia tej fazy:
+
+- **Nie ma ekranu historii** (faza 6): zakończone treningi są w bazie, ale poza podsumowaniem
+  tuż po zakończeniu (adres `#/trening/podsumowanie/<id>`) nie da się ich jeszcze przeglądać.
+- Podsumowanie nie pokazuje rekordów ani porównania z poprzednim treningiem (faza 6).
+- Seria nieudana nie daje jeszcze sugestii (faza 5).
+- Powiadomień systemowych nie ma (faza 7): koniec odpoczynku widać i słychać tylko przy otwartej
+  aplikacji. Dźwięk nie był sprawdzany na iPhonie.
+- W trakcie treningu nie da się tworzyć ani rozłączać superserii, zmienić typu serii
+  (robocza/rozgrzewkowa) ani przeciągać ćwiczeń (kolejność tylko z menu).
+- Nie ma opcjonalnej akcji „Zapisz zmiany do planu”.
+- Szacowany czas treningu nie jest pokazywany (brak wiarygodnej podstawy przed historią).
+- Zustand nie został dodany: stan sesji żyje w IndexedDB i jest czytany na żywo, więc osobny
+  magazyn stanu byłby drugą, nietrwałą kopią tych samych danych.
+
 Czego **nie ma** (ekrany mówią o tym wprost i nie mają żadnych kontrolek):
 
-- Pulpit, Trening, Historia – tylko informacja „nie jest jeszcze wdrożone”.
+- Historia i statystyki; podsumowanie aktywności na Pulpicie – faza 6.
 - W Ustawieniach działa tylko sekcja Wygląd; timer, przypomnienia i backup – faza 7.
 - Service worker i tryb offline – faza 8 (manifest, ikony i powiadomienie o aktualizacji już są).
 
-## Wyniki testów (2026-11-16, koniec fazy 3)
+## Wyniki testów (2026-11-16, koniec fazy 4)
 
 | Sprawdzenie | Polecenie | Wynik |
 |---|---|---|
 | TypeScript strict | `npm run typecheck` | 0 błędów |
 | ESLint | `npm run lint` | 0 błędów, 0 ostrzeżeń |
-| Testy jednostkowe i komponentowe | `npm test` | 196 / 196 (14 plików) |
+| Testy jednostkowe i komponentowe | `npm test` | 264 / 264 (19 plików) |
 | Build produkcyjny | `npm run build` | OK |
-| Testy e2e (Chrome, build produkcyjny) | `npm run test:e2e` | 38 / 38 |
+| Testy e2e (Chrome, build produkcyjny) | `npm run test:e2e` | 49 / 49 |
 | Build pod podścieżką (jak GitHub Pages) | ręcznie | działa, zapis ustawień OK, 0 błędów konsoli |
 | GitHub Actions – zadanie `check-and-build` | automatycznie po pushu | OK (typy, lint, testy, build na serwerach GitHuba) |
 | GitHub Actions – zadanie `deploy` | automatycznie po pushu | OK po włączeniu Pages; aplikacja: https://squizyy-essa.github.io/apka-silka/ |
@@ -231,6 +283,11 @@ Uzasadnienia w `docs/ARCHITECTURE.md` (§2 „Odstępstwa”).
     powtórzeń, kolejność, superserie) rozstrzyga repozytorium w transakcji na aktualnych danych.
 20. Superseria = osobny rekord `supersetGroups` + `supersetGroupId` w ćwiczeniach planu;
     w superserii obowiązuje przerwa po rundzie, własne przerwy ćwiczeń są zachowane na później.
+22. Sesja kopiuje z planu wszystko, czego potrzebuje (migawki przerw, skoku, zamienników,
+    przerwy superserii); pola sesji są nieindeksowane, więc bez nowej wersji schematu.
+23. „Wykonana” bez wpisanego wyniku: ciężar z planu; powtórzenia tylko gdy plan to jedna liczba.
+24. Timer: stan w `restTimerState` (znaczniki czasu), wyświetlanie odświeżane co 250 ms.
+25. Pytanie o wznowienie pojawia się raz na uruchomienie aplikacji.
 21. Adresy: `/plany/nowy`, `/plany/plan/:planId`, `/plany/plan/:planId/dzien/:dayId`.
 
 ## Znane problemy i ograniczenia
@@ -255,56 +312,24 @@ Uzasadnienia w `docs/ARCHITECTURE.md` (§2 „Odstępstwa”).
 
 ## Kolejne zadania
 
-### Faza 4 – Aktywny trening (W TOKU – przerwana 2026-11-16 z powodu limitu sesji)
+### Faza 5 – Progresja (następna)
 
-**Zrobione i przetestowane (tylko warstwa danych, bez ekranów – użytkownik nic nowego nie widzi):**
-
-- Model: `SessionExercise` ma migawki z planu (`restSecondsSnapshot`,
-  `progressionIncrementKgSnapshot`, `supersetRestSecondsSnapshot`,
-  `alternativeExerciseIdsSnapshot`), `SessionSet` ma `plannedDurationSeconds`,
-  `plannedDistanceMeters`, `tempo`. Bez nowej wersji schematu (pola nieindeksowane, tabele sesji
-  były puste we wszystkich wydanych wersjach).
-- `SessionRepository` (`src/db/repositories/dexieSessionRepository.ts`): `startFromPlanDay`
-  (migawka ćwiczeń, serii, przerw, superserii), `startEmpty`, `getActive`, `observeActive`,
-  `abandon`. Jedna aktywna sesja pilnowana w transakcji (test z podwójnym startem i drugą kartą).
-- `localDateOf` (`src/shared/lib/localDate.ts`) – lokalna data treningu.
-- Testy: `sessionRepository.test.ts` (10 testów).
-
-- Część 2 (dane i logika, nadal bez ekranów): `SessionRepository` zapisuje wyniki serii
-  (`updateSet`, `setSetStatus`), `addSet`/`removeSet`, `addExercise`, pominięcie, zamianę,
-  usunięcie i kolejność ćwiczeń, notatki, `finish`, `getPreviousResult`,
-  `getLastCompletedDayId` oraz stan timera. Czyste reguły w `src/shared/logic/workout.ts`:
-  wynik przy oznaczaniu serii, objętość robocza, przerwa po serii/rundzie superserii, następna
-  seria, timer ze znaczników czasu, propozycja następnego dnia. Testy: `workout.test.ts`,
-  `sessionRecording.test.ts`.
-
-**Następny krok – zacząć tutaj:** ekrany w `src/workouts/` (start treningu, aktywny trening
-w widoku tabeli i kart, timer, wznawianie, zakończenie i podsumowanie) oraz Pulpit.
-Pozostałe punkty poniżej są nietknięte.
-
-- [ ] Zustand (stan interfejsu aktywnej sesji), date-fns w razie potrzeby.
-- [ ] Repozytorium sesji: start z dnia planu (migawka ćwiczeń, serii, przerw, superserii –
-      w tym przerwy po rundzie; schemat v4, jeśli potrzebne pola), pusty trening, jedna aktywna
-      sesja (sprawdzane w transakcji), wznowienie, porzucenie, zakończenie.
-- [ ] Ekran treningu: widok tabeli i widok kart (przełączanie bez utraty danych, zapamiętane
-      w ustawieniach), statusy serii (oczekująca / wykonana / nieudana / pominięta), zapis każdej
-      zmiany od razu, „Poprzedni wynik” wg identyfikatora ćwiczenia.
-- [ ] Edycje w trakcie: ciężar, powtórzenia, RIR, dodanie/usunięcie serii, zamiana ćwiczenia
-      (zamienniki z planu), kolejność, pominięcie, notatka, seria nieudana z rzeczywistym wynikiem.
-      Bez zmiany planu; osobna akcja „Zapisz zmiany do planu” z potwierdzeniem (opcjonalna).
-- [ ] Timer odpoczynku liczony ze znaczników czasu (`restTimerState`), pauza, ±15 s, pominięcie,
-      dźwięk z obsługą blokady, przerwa po rundzie superserii.
-- [ ] Wznawianie po zamknięciu aplikacji („Czy chcesz wznowić trening?”), porzucenie z potwierdzeniem.
-- [ ] Zakończenie i podsumowanie (§10): czasy, liczba serii, objętość robocza, partie, notatka,
-      samopoczucie 1–5. Rekordy i porównanie z poprzednim treningiem – faza 6.
-- [ ] Pulpit: najbliższy trening, szybki start, wznowienie.
-- [ ] Biblioteka: sekcja „Ostatnio używane” zacznie się pokazywać; ostrzeżenie przy zmianie
-      rodzaju pomiaru ćwiczenia z historią.
-- [ ] Testy: reguły sesji, objętość, timer (czas wstrzyknięty), e2e testy akceptacyjne B i F.
+- [ ] Moduł `src/progression/` (czyste funkcje + testy): double progression (zakres powtórzeń,
+      docelowy RIR, tylko serie robocze; pominięte nie liczą się jako udane; brak RIR nie
+      potwierdza celu; bez docelowego RIR liczą się same powtórzenia).
+- [ ] Skok progresji z migawki ćwiczenia (`progressionIncrementKgSnapshot`, domyślnie 2,5 kg);
+      arytmetyka bez błędów zmiennoprzecinkowych.
+- [ ] Sugestie po nieudanej serii (maks. dwie: obniż ciężar o jeden skok / dostosuj powtórzenia),
+      z uzasadnieniem; „Zastosuj” zmienia tylko wybraną przyszłą serię; „Zignoruj”.
+- [ ] Sugestie między treningami po zakończeniu (zwiększ ciężar / powtórzenia / utrzymaj /
+      rozważ zmniejszenie po powtarzających się niepowodzeniach) w podsumowaniu; zastosowanie do
+      planu tylko za zgodą.
+- [ ] Zaprojektować zapis sugestii (schemat v4), żeby było widać, co zaproponowano i co wybrano.
+- [ ] Testy akceptacyjne C, D, E.
 
 ### Później
 
-Fazy 5–8 według tabeli w `docs/ARCHITECTURE.md` §6.
+Fazy 6–8 według tabeli w `docs/ARCHITECTURE.md` §6.
 
 ## Do zrobienia przez właściciela projektu
 

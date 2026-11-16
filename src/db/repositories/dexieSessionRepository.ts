@@ -471,6 +471,12 @@ export function createDexieSessionRepository(db: TrainingDatabase): SessionRepos
         await putExercise({ ...exercise, notes: notes?.trim() || undefined });
       }),
 
+    updateExerciseRest: (sessionExerciseId, restSeconds) =>
+      write(async () => {
+        const exercise = await requireExercise(sessionExerciseId);
+        await putExercise({ ...exercise, restSecondsSnapshot: restSeconds });
+      }),
+
     finish: (sessionId, result, now = new Date()) =>
       write(async () => {
         const session = await requireActiveSession(sessionId);

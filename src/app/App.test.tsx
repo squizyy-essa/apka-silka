@@ -60,10 +60,10 @@ describe('App', () => {
   });
 
   it('marks unfinished modules as not implemented and shows no fake controls there', async () => {
-    renderApp(nextDatabaseName(), '/trening');
+    renderApp(nextDatabaseName(), '/historia');
 
     const main = within(await screen.findByRole('main'));
-    expect(main.getByText('Ten moduł nie jest jeszcze wdrożony')).toBeInTheDocument();
+    expect(await main.findByText('Ten moduł nie jest jeszcze wdrożony')).toBeInTheDocument();
     expect(main.queryAllByRole('button')).toHaveLength(0);
     expect(main.queryAllByRole('textbox')).toHaveLength(0);
   });

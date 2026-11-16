@@ -3,9 +3,9 @@
 Aplikacja do planowania i zapisywania treningów siłowych. Działa w przeglądarce na telefonie
 i komputerze, bez konta i bez serwera – dane są zapisywane lokalnie na urządzeniu.
 
-> **Stan projektu:** ukończone fazy 1–3 z 8. Działa szkielet aplikacji, motywy, instalacja na
-> ekranie początkowym, biblioteka ćwiczeń i kreator planów treningowych. Wykonywanie treningów,
-> progresja i statystyki są w budowie.
+> **Stan projektu:** ukończone fazy 1–4 z 8. Działa biblioteka ćwiczeń, kreator planów
+> i wykonywanie treningów (zapis serii, timer, wznawianie, podsumowanie). Progresja, historia
+> i statystyki są w budowie.
 > Szczegóły: [`PROJECT_PROGRESS.md`](PROJECT_PROGRESS.md), plan: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ## Wymagania
@@ -76,8 +76,8 @@ Eksport i import kopii zapasowej (JSON) są zaplanowane na fazę 7 i **jeszcze n
 
 ## Znane ograniczenia
 
-- Funkcje treningowe (trening, progresja, historia, pomiary) nie są
-  jeszcze wdrożone – ich ekrany mówią o tym wprost.
+- Część funkcji (progresja, historia, statystyki, pomiary) nie jest
+  jeszcze wdrożona – ekrany mówią o tym wprost.
 - iOS: Safari i aplikacja dodana do ekranu początkowego mają osobne dane. Safari może usunąć dane
   strony nieużywanej przez 7 dni (nie dotyczy aplikacji z ekranu początkowego).
 - Brak trybu offline i powiadomień (faza 8 i 7); start aplikacji wymaga internetu.

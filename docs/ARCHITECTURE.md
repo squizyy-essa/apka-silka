@@ -30,7 +30,7 @@ odnoszą się do jej rozdziałów). Bieżący stan prac jest w [`PROJECT_PROGRES
 | Lint | ESLint 9 + typescript-eslint (strict, type-checked) + jsx-a11y + react-hooks | |
 
 Biblioteki ze specyfikacji dodawane dopiero w fazie, która ich używa (żeby nie utrzymywać martwych
-zależności): Zustand (faza 4), React Hook Form (faza 2), dnd-kit (faza 3), Recharts i date-fns
+zależności): React Hook Form (faza 2), dnd-kit (faza 3), Recharts i date-fns
 (faza 6), vite-plugin-pwa (faza 8).
 
 ### Odstępstwa od specyfikacji i ich powody
@@ -43,6 +43,9 @@ zależności): Zustand (faza 4), React Hook Form (faza 2), dnd-kit (faza 3), Rec
    `tailwind-merge`), podpięte od razu pod nasze tokeny. Efekt jest ten sam, bez nieużywanego kodu.
 3. **TypeScript 6.0 zamiast 7.x i ESLint 9 zamiast 10.** `typescript-eslint` nie obsługuje jeszcze
    TS 7, a `eslint-plugin-jsx-a11y` – ESLint 10. Do podniesienia, gdy wtyczki nadążą.
+5. **Bez Zustand.** Stan aktywnego treningu jest w IndexedDB i czytany na żywo (Dexie
+   `liveQuery`); osobny magazyn stanu byłby drugą, nietrwałą kopią tych samych danych – a
+   specyfikacja zabrania zastępowania trwałego zapisu stanem w pamięci.
 4. **Kolor tekstu pomocniczego `#5C6577` zamiast `#727B8C`.** Proponowany kolor ma kontrast 4,0:1
    na tle aplikacji, poniżej progu WCAG AA (4,5:1). Pozostałe kolory palety Minimal są zgodne
    ze specyfikacją; pilnuje tego test `tokens.test.ts`.
@@ -180,26 +183,26 @@ Stan: ✅ obsłużone i przetestowane, ◐ częściowo (fundament gotowy), ⏳ z
 
 | # | Przypadek | Oczekiwane zachowanie | Faza | Stan |
 |---|---|---|---|---|
-| 1 | Zamknięcie aplikacji podczas treningu | każda zmiana serii jest już w bazie; po starcie pytanie „Czy chcesz wznowić trening?” | 4 | ⏳ |
-| 2 | Odświeżenie strony | jak wyżej; ten sam ekran (adres), te same ustawienia | 1/4 | ◐ ustawienia i adresy ✅ |
-| 3 | Dwie karty | wspólna baza, zmiany widoczne na żywo; jedna aktywna sesja; migracja w jednej karcie → druga prosi o odświeżenie | 1/4 | ◐ ustawienia i migracja ✅ |
-| 4 | Próba rozpoczęcia drugiego treningu | sprawdzenie w transakcji; zamiast drugiej sesji propozycja wznowienia lub porzucenia istniejącej | 4 | ⏳ |
-| 5 | Usunięcie ćwiczenia użytego w historii | historia zostaje (migawka nazwy i typu w sesji); ćwiczenie znika tylko z biblioteki | 2/4 | ◐ usuwanie ✅ |
-| 6 | Edycja planu podczas aktywnego treningu | sesja działa na migawce z chwili startu; plan zmienia się niezależnie | 4 | ⏳ |
-| 7 | Usunięcie serii | usuwana tylko z sesji, kolejność przeliczona; plan bez zmian | 4 | ⏳ |
-| 8 | Zmiana kolejności ćwiczeń | nowa kolejność zapisana w sesji (lub w planie w kreatorze) | 3/4 | ◐ w planie ✅ |
-| 9 | Pominięcie całego ćwiczenia | `isSkipped`, serie oczekujące → pominięte; nie liczą się do objętości ani progresji | 4 | ⏳ |
-| 10 | Zakończenie bez wykonanej serii | ostrzeżenie; do wyboru zapis pustego treningu albo porzucenie | 4 | ⏳ |
+| 1 | Zamknięcie aplikacji podczas treningu | każda zmiana serii jest już w bazie; po starcie pytanie „Czy chcesz wznowić trening?” | 4 | ✅ |
+| 2 | Odświeżenie strony | jak wyżej; ten sam ekran (adres), te same ustawienia | 1/4 | ✅ |
+| 3 | Dwie karty | wspólna baza, zmiany widoczne na żywo; jedna aktywna sesja; migracja w jednej karcie → druga prosi o odświeżenie | 1/4 | ✅ |
+| 4 | Próba rozpoczęcia drugiego treningu | sprawdzenie w transakcji; zamiast drugiej sesji propozycja wznowienia lub porzucenia istniejącej | 4 | ✅ |
+| 5 | Usunięcie ćwiczenia użytego w historii | historia zostaje (migawka nazwy i typu w sesji); ćwiczenie znika tylko z biblioteki | 2/4 | ✅ |
+| 6 | Edycja planu podczas aktywnego treningu | sesja działa na migawce z chwili startu; plan zmienia się niezależnie | 4 | ✅ |
+| 7 | Usunięcie serii | usuwana tylko z sesji, kolejność przeliczona; plan bez zmian | 4 | ✅ |
+| 8 | Zmiana kolejności ćwiczeń | nowa kolejność zapisana w sesji (lub w planie w kreatorze) | 3/4 | ✅ |
+| 9 | Pominięcie całego ćwiczenia | `isSkipped`, serie oczekujące → pominięte; nie liczą się do objętości ani progresji | 4 | ✅ |
+| 10 | Zakończenie bez wykonanej serii | ostrzeżenie; do wyboru zapis pustego treningu albo porzucenie | 4 | ✅ |
 | 11 | Ciężar 0 kg | poprawna wartość, różna od „nie podano” | 1/3 | ✅ |
 | 12 | Ciężar 62,5 kg | pole przyjmuje przecinek i kropkę; obliczenia w jednostkach 0,01 kg bez błędów zmiennoprzecinkowych | 3/5 | ◐ wpisywanie ✅ |
 | 13 | Brak RIR | zapisane jako brak danych; nie potwierdza celu RIR; bez celu RIR liczą się tylko powtórzenia | 5 | ◐ model ✅ |
 | 14 | Więcej powtórzeń niż cel | zapis rzeczywistej liczby; cel uznany za osiągnięty | 5 | ⏳ |
-| 15 | Mniej powtórzeń niż plan | zapis rzeczywistej liczby, status nieudana, dwie sugestie do wyboru | 4/5 | ⏳ |
-| 16 | Niewykonane wszystkie serie | pozostałe → pominięte przy zakończeniu; brak sugestii zwiększenia ciężaru | 4/5 | ⏳ |
-| 17 | Dwa treningi jednego dnia | dwie osobne sesje z tą samą datą lokalną; kalendarz pokazuje listę | 4/6 | ⏳ |
-| 18 | Zmiana strefy czasowej | `localWorkoutDate` zapisane raz przy starcie i nigdy nie przeliczane; dokładny czas w UTC | 4 | ◐ model ✅ |
-| 19 | Timer kończy się w tle | czas liczony z `endsAt`; po powrocie pokazany stan faktyczny | 4 | ⏳ |
-| 20 | Zablokowany dźwięk | timer działa, sygnał wizualny, informacja jak włączyć dźwięk | 4 | ⏳ |
+| 15 | Mniej powtórzeń niż plan | zapis rzeczywistej liczby, status nieudana, dwie sugestie do wyboru | 4/5 | ◐ zapis ✅, sugestie ⏳ |
+| 16 | Niewykonane wszystkie serie | pozostałe → pominięte przy zakończeniu; brak sugestii zwiększenia ciężaru | 4/5 | ◐ zapis ✅ |
+| 17 | Dwa treningi jednego dnia | dwie osobne sesje z tą samą datą lokalną; kalendarz pokazuje listę | 4/6 | ◐ zapis ✅ |
+| 18 | Zmiana strefy czasowej | `localWorkoutDate` zapisane raz przy starcie i nigdy nie przeliczane; dokładny czas w UTC | 4 | ✅ |
+| 19 | Timer kończy się w tle | czas liczony z `endsAt`; po powrocie pokazany stan faktyczny | 4 | ✅ |
+| 20 | Zablokowany dźwięk | timer działa, sygnał wizualny, informacja jak włączyć dźwięk | 4 | ◐ informacja ✅, niesprawdzone na iOS |
 | 21 | Odmowa zgody na powiadomienia | przypomnienia tylko w otwartej aplikacji; brak ponawiania prośby | 7 | ⏳ |
 | 22 | Uszkodzony JSON przy imporcie | czytelny błąd, baza nietknięta | 7 | ⏳ |
 | 23 | Import ze starszej wersji schematu | migracja danych importu do bieżącej wersji przed walidacją; nowsza wersja → odmowa | 7 | ⏳ |

@@ -11,7 +11,9 @@ import { PlanCreatePage } from '@/plans/PlanCreatePage';
 import { PlanEditorPage } from '@/plans/PlanEditorPage';
 import { PlansPage } from '@/plans/PlansPage';
 import { SettingsPage } from '@/settings/SettingsPage';
+import { WORKOUT_PATHS } from '@/workouts/paths';
 import { WorkoutPage } from '@/workouts/WorkoutPage';
+import { WorkoutSummaryPage } from '@/workouts/WorkoutSummaryPage';
 import { AppShell } from './AppShell';
 import { NotFoundPage, RouteErrorPage } from './errorPages';
 import { ROUTE_PATHS } from './navigation';
@@ -60,6 +62,11 @@ export const routes: RouteObject[] = [
         handle: { title: 'Edycja ćwiczenia' },
       },
       { path: ROUTE_PATHS.workout, element: <WorkoutPage />, handle: { title: 'Trening' } },
+      {
+        path: WORKOUT_PATHS.summary(':sessionId'),
+        element: <WorkoutSummaryPage />,
+        handle: { title: 'Podsumowanie treningu' },
+      },
       {
         path: ROUTE_PATHS.history,
         element: <HistoryPage />,
