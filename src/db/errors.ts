@@ -137,15 +137,29 @@ export type SessionRuleViolation =
   | 'session-not-found'
   | 'day-not-found'
   /** The session is finished or abandoned and can no longer be changed this way. */
-  | 'not-active';
+  | 'not-active'
+  | 'exercise-not-found'
+  | 'set-not-found'
+  /** The set cannot be marked as done: a required result (see `missing`) was not entered. */
+  | 'missing-result'
+  /** The exercise already has recorded sets, so it cannot be swapped or removed. */
+  | 'has-results'
+  /** The submitted order does not match the stored exercises. */
+  | 'stale-order';
 
 /** A requested change to a workout session is not possible. Nothing was written. */
 export class SessionRuleError extends Error {
   readonly violation: SessionRuleViolation;
+  /** For `missing-result`: which value has to be entered. */
+  readonly missing: 'weight' | 'reps' | 'duration' | 'distance' | undefined;
 
-  constructor(violation: SessionRuleViolation) {
-    super(`Session rule violated: ${violation}`);
+  constructor(
+    violation: SessionRuleViolation,
+    missing?: 'weight' | 'reps' | 'duration' | 'distance',
+  ) {
+    super(`Session rule violated: ${violation}${missing ? ` (${missing})` : ''}`);
     this.name = 'SessionRuleError';
     this.violation = violation;
+    this.missing = missing;
   }
 }

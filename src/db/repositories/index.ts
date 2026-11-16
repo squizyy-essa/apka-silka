@@ -26,6 +26,7 @@ export type {
   PlanRepository,
   SessionDetail,
   SessionRepository,
+  SessionSetPatch,
   Repositories,
   SettingsRepository,
   Unsubscribe,

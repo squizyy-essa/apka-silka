@@ -270,9 +270,16 @@ Uzasadnienia w `docs/ARCHITECTURE.md` (§2 „Odstępstwa”).
 - `localDateOf` (`src/shared/lib/localDate.ts`) – lokalna data treningu.
 - Testy: `sessionRepository.test.ts` (10 testów).
 
-**Następny krok – zacząć tutaj:** rozszerzyć `SessionRepository` o zapis serii
-(`updateSet`, `completeSet`/`failSet`/`skipSet`, `addSet`, `removeSet`), pominięcie i zamianę
-ćwiczenia, kolejność, notatki, `finish` (z oceną samopoczucia), a potem ekran treningu.
+- Część 2 (dane i logika, nadal bez ekranów): `SessionRepository` zapisuje wyniki serii
+  (`updateSet`, `setSetStatus`), `addSet`/`removeSet`, `addExercise`, pominięcie, zamianę,
+  usunięcie i kolejność ćwiczeń, notatki, `finish`, `getPreviousResult`,
+  `getLastCompletedDayId` oraz stan timera. Czyste reguły w `src/shared/logic/workout.ts`:
+  wynik przy oznaczaniu serii, objętość robocza, przerwa po serii/rundzie superserii, następna
+  seria, timer ze znaczników czasu, propozycja następnego dnia. Testy: `workout.test.ts`,
+  `sessionRecording.test.ts`.
+
+**Następny krok – zacząć tutaj:** ekrany w `src/workouts/` (start treningu, aktywny trening
+w widoku tabeli i kart, timer, wznawianie, zakończenie i podsumowanie) oraz Pulpit.
 Pozostałe punkty poniżej są nietknięte.
 
 - [ ] Zustand (stan interfejsu aktywnej sesji), date-fns w razie potrzeby.

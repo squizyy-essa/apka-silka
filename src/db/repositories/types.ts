@@ -5,6 +5,7 @@ import type {
   PlanDay,
   PlannedExercise,
   PlannedSet,
+  RestTimerState,
   ScheduleMode,
   SessionExercise,
   SessionSet,
@@ -247,7 +248,83 @@ export interface SessionRepository {
   startEmpty(name: string, now?: Date): Promise<SessionDetail>;
   /** Marks the active session as abandoned. Its recorded sets are kept, but it is not part of history. */
   abandon(sessionId: string, now?: Date): Promise<void>;
+  /** Any session by id (e.g. for the summary of a finished workout). */
+  get(sessionId: string): Promise<SessionDetail | null>;
+
+  // --- changes below apply to the active session only and never touch the plan ---
+
+  /** Stores what was really done. An explicit `undefined` clears a value. Saved at once. */
+  updateSet(setId: string, patch: SessionSetPatch): Promise<SessionSet>;
+  /**
+   * `completed`: records the result (see `resultForCompletion`); rejects with
+   * `missing-result` when a required value was not entered.
+   * `failed`: the goal was not met; keeps whatever was really performed.
+   * `skipped` / `pending`: not done / undo.
+   */
+  setSetStatus(setId: string, status: SessionSet['status'], now?: Date): Promise<SessionSet>;
+  /** The new set copies the plan values of the last one and is pending. */
+  addSet(sessionExerciseId: string): Promise<SessionSet>;
+  removeSet(setId: string): Promise<void>;
+
+  addExercise(
+    sessionId: string,
+    exerciseId: string,
+    options: { readonly restSeconds: number },
+  ): Promise<SessionExercise>;
+  /** Skipping marks the exercise's pending sets as skipped; undoing makes them pending again. */
+  setExerciseSkipped(sessionExerciseId: string, isSkipped: boolean): Promise<void>;
+  /**
+   * Replaces the exercise (e.g. with an alternative). Only possible before
+   * any of its sets was done; planned weights are dropped because they
+   * belonged to the other exercise.
+   */
+  swapExercise(sessionExerciseId: string, newExerciseId: string): Promise<SessionExercise>;
+  /** Only possible while the exercise has no done sets. */
+  removeExercise(sessionExerciseId: string): Promise<void>;
+  reorderExercises(sessionId: string, orderedIds: readonly string[]): Promise<void>;
+  updateExerciseNotes(sessionExerciseId: string, notes: string | undefined): Promise<void>;
+
+  /**
+   * Ends the workout: sets still pending become skipped, the end time is
+   * recorded. Sets recorded earlier were already saved – finishing only
+   * closes the session.
+   */
+  finish(
+    sessionId: string,
+    result: { readonly wellbeingRating?: number | undefined; readonly notes?: string | undefined },
+    now?: Date,
+  ): Promise<SessionDetail>;
+
+  /**
+   * The most recent *completed* workout in which this exact exercise (same
+   * id, not merely the same name) had done sets, excluding `excludeSessionId`.
+   */
+  getPreviousResult(
+    exerciseId: string,
+    excludeSessionId: string,
+  ): Promise<{ readonly session: WorkoutSession; readonly sets: readonly SessionSet[] } | null>;
+  /** Plan day of the most recently completed workout of the given plan. */
+  getLastCompletedDayId(planId: string): Promise<string | undefined>;
+
+  observeRestTimer(
+    sessionId: string,
+    listener: (timer: RestTimerState | null) => void,
+    onError?: ErrorListener,
+  ): Unsubscribe;
+  saveRestTimer(timer: RestTimerState): Promise<void>;
+  clearRestTimer(sessionId: string): Promise<void>;
 }
+
+export type SessionSetPatch = {
+  readonly [K in
+    | 'type'
+    | 'actualWeightKg'
+    | 'actualReps'
+    | 'actualRIR'
+    | 'durationSeconds'
+    | 'distanceMeters'
+    | 'notes']?: SessionSet[K] | undefined;
+};
 
 /** Grows with each phase as modules get their repositories. */
 export interface Repositories {
