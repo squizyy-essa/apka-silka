@@ -76,3 +76,12 @@ export const plannedSetSchema = z
     { path: ['targetRepsMin'], message: 'Dolna granica powtórzeń nie może być większa od górnej.' },
   );
 export type PlannedSet = z.infer<typeof plannedSetSchema>;
+
+/** Two or more consecutive exercises of a day performed back to back. */
+export const supersetGroupSchema = z.object({
+  id: idSchema,
+  planDayId: idSchema,
+  /** Rest after a full round (one set of every exercise in the group). */
+  restAfterRoundSeconds: secondsSchema,
+});
+export type SupersetGroup = z.infer<typeof supersetGroupSchema>;

@@ -92,12 +92,11 @@ w kolejnych fazach: `progression/` (5), `calendar/`,
   (`openVerified`) – użytkownik dostaje prośbę o odświeżenie zamiast ryzyka zapisu w starym formacie.
 - Gdy inna karta podnosi wersję schematu, bieżąca karta zwalnia połączenie (nie blokuje migracji)
   i prosi o odświeżenie.
-- Wersja 2 dodaje ćwiczeniom pole `category`. Wersja 1 zawiera wszystkie encje z §17: `exercises`, `exerciseMedia`, `trainingPlans`,
+- Wersja 3 dodaje tabelę `supersetGroups`. Wersja 2 dodaje ćwiczeniom pole `category`. Wersja 1 zawiera wszystkie encje z §17: `exercises`, `exerciseMedia`, `trainingPlans`,
   `planDays`, `plannedExercises`, `plannedSets`, `workoutSessions`, `sessionExercises`,
   `sessionSets`, `bodyMeasurements`, `appSettings`, `restTimerState`.
 - Do zaprojektowania w swoich fazach (jako kolejne wersje schematu): sugestie progresji i
-  ukończone rundy superserii (fazy 4–5), metadane importów (faza 7), pole „kategoria” ćwiczenia
-  (faza 2).
+  ukończone rundy superserii (fazy 4–5), metadane importów (faza 7).
 
 ### Modele i walidacja (`src/shared/domain`)
 
@@ -188,11 +187,11 @@ Stan: ✅ obsłużone i przetestowane, ◐ częściowo (fundament gotowy), ⏳ z
 | 5 | Usunięcie ćwiczenia użytego w historii | historia zostaje (migawka nazwy i typu w sesji); ćwiczenie znika tylko z biblioteki | 2/4 | ◐ usuwanie ✅ |
 | 6 | Edycja planu podczas aktywnego treningu | sesja działa na migawce z chwili startu; plan zmienia się niezależnie | 4 | ⏳ |
 | 7 | Usunięcie serii | usuwana tylko z sesji, kolejność przeliczona; plan bez zmian | 4 | ⏳ |
-| 8 | Zmiana kolejności ćwiczeń | nowa kolejność zapisana w sesji (lub w planie w kreatorze) | 3/4 | ⏳ |
+| 8 | Zmiana kolejności ćwiczeń | nowa kolejność zapisana w sesji (lub w planie w kreatorze) | 3/4 | ◐ w planie ✅ |
 | 9 | Pominięcie całego ćwiczenia | `isSkipped`, serie oczekujące → pominięte; nie liczą się do objętości ani progresji | 4 | ⏳ |
 | 10 | Zakończenie bez wykonanej serii | ostrzeżenie; do wyboru zapis pustego treningu albo porzucenie | 4 | ⏳ |
-| 11 | Ciężar 0 kg | poprawna wartość, różna od „nie podano” | 1/3 | ◐ walidacja ✅ |
-| 12 | Ciężar 62,5 kg | pole przyjmuje przecinek i kropkę; obliczenia w jednostkach 0,01 kg bez błędów zmiennoprzecinkowych | 2/5 | ⏳ |
+| 11 | Ciężar 0 kg | poprawna wartość, różna od „nie podano” | 1/3 | ✅ |
+| 12 | Ciężar 62,5 kg | pole przyjmuje przecinek i kropkę; obliczenia w jednostkach 0,01 kg bez błędów zmiennoprzecinkowych | 3/5 | ◐ wpisywanie ✅ |
 | 13 | Brak RIR | zapisane jako brak danych; nie potwierdza celu RIR; bez celu RIR liczą się tylko powtórzenia | 5 | ◐ model ✅ |
 | 14 | Więcej powtórzeń niż cel | zapis rzeczywistej liczby; cel uznany za osiągnięty | 5 | ⏳ |
 | 15 | Mniej powtórzeń niż plan | zapis rzeczywistej liczby, status nieudana, dwie sugestie do wyboru | 4/5 | ⏳ |
@@ -207,7 +206,7 @@ Stan: ✅ obsłużone i przetestowane, ◐ częściowo (fundament gotowy), ⏳ z
 | 24 | Import z brakującymi relacjami | odmowa z listą problemów, baza nietknięta | 7 | ⏳ |
 | 25 | Błąd zapisu / brak miejsca | komunikat `StorageError`, ekran pokazuje stan z bazy, nic nie udaje zapisu | 1+ | ◐ ustawienia ✅ |
 | 26 | Brak ilustracji ćwiczenia | neutralny placeholder | 2 | ✅ |
-| 27 | Usunięcie planu z zachowaniem historii | sesje zostają (mają własną nazwę i migawki); odwołanie do planu może być puste | 3 | ⏳ |
+| 27 | Usunięcie planu z zachowaniem historii | sesje zostają (mają własną nazwę i migawki); odwołanie do planu może być puste | 3 | ✅ |
 | 28 | Edycja historycznego treningu | ostrzeżenie; statystyki i rekordy liczone z danych, więc od razu aktualne | 6 | ⏳ |
 | 29 | Zmiana stylu i motywu | natychmiastowa, zapamiętana, bez wpływu na dane | 1 | ✅ |
 | 30 | Aktualizacja aplikacji podczas sesji | bez automatycznego przeładowania; komunikat o aktualizacji; baza nie jest kasowana | 8 | ◐ ochrona bazy ✅ |

@@ -107,3 +107,26 @@ export class ExerciseRuleError extends Error {
     this.violation = violation;
   }
 }
+
+export type PlanRuleViolation =
+  | 'plan-not-found'
+  | 'day-not-found'
+  | 'exercise-not-found'
+  | 'set-not-found'
+  /** An archived plan cannot be made the primary plan. */
+  | 'plan-archived'
+  /** There is no following exercise to form a superset with. */
+  | 'no-next-exercise'
+  /** The submitted order does not match the stored items (changed elsewhere meanwhile). */
+  | 'stale-order';
+
+/** A requested change to a training plan is not possible. Nothing was written. */
+export class PlanRuleError extends Error {
+  readonly violation: PlanRuleViolation;
+
+  constructor(violation: PlanRuleViolation) {
+    super(`Plan rule violated: ${violation}`);
+    this.name = 'PlanRuleError';
+    this.violation = violation;
+  }
+}

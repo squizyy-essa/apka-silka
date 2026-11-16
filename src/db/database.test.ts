@@ -60,6 +60,7 @@ describe('TrainingDatabase', () => {
         'restTimerState',
         'sessionExercises',
         'sessionSets',
+        'supersetGroups',
         'trainingPlans',
         'workoutSessions',
       ].sort(),

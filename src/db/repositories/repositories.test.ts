@@ -207,11 +207,14 @@ describe('storage error mapping', () => {
 
   it('refuses to open a database written by a newer app version', async () => {
     const name = nextDatabaseName();
-    const newer = new TrainingDatabase(name, [
-      { version: 1, description: 'v1', stores: { appSettings: 'id' } },
-      { version: 2, description: 'v2', stores: { appSettings: 'id' } },
-      { version: 3, description: 'v3', stores: { appSettings: 'id' } },
-    ]);
+    const newer = new TrainingDatabase(
+      name,
+      Array.from({ length: CURRENT_SCHEMA_VERSION + 1 }, (_unused, index) => ({
+        version: index + 1,
+        description: `v${index + 1}`,
+        stores: { appSettings: 'id' },
+      })),
+    );
     await newer.open();
     expect(newer.verno).toBeGreaterThan(CURRENT_SCHEMA_VERSION);
     newer.close();

@@ -10,6 +10,7 @@ import type {
   RestTimerState,
   SessionExercise,
   SessionSet,
+  SupersetGroup,
   TrainingPlan,
   WorkoutSession,
 } from '@/shared/domain';
@@ -34,6 +35,7 @@ export class TrainingDatabase extends Dexie {
   planDays!: Table<PlanDay, string>;
   plannedExercises!: Table<PlannedExercise, string>;
   plannedSets!: Table<PlannedSet, string>;
+  supersetGroups!: Table<SupersetGroup, string>;
   workoutSessions!: Table<WorkoutSession, string>;
   sessionExercises!: Table<SessionExercise, string>;
   sessionSets!: Table<SessionSet, string>;

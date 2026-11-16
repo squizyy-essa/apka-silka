@@ -5,6 +5,10 @@ import { ExerciseDetailPage } from '@/exercises/ExerciseDetailPage';
 import { ExerciseCreatePage, ExerciseEditPage } from '@/exercises/ExerciseFormPage';
 import { ExerciseListPage } from '@/exercises/ExerciseListPage';
 import { EXERCISE_PATHS } from '@/exercises/paths';
+import { DayEditorPage } from '@/plans/DayEditorPage';
+import { PLAN_PATHS } from '@/plans/paths';
+import { PlanCreatePage } from '@/plans/PlanCreatePage';
+import { PlanEditorPage } from '@/plans/PlanEditorPage';
 import { PlansPage } from '@/plans/PlansPage';
 import { SettingsPage } from '@/settings/SettingsPage';
 import { WorkoutPage } from '@/workouts/WorkoutPage';
@@ -24,6 +28,17 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <DashboardPage />, handle: { title: 'Pulpit' } },
       { path: ROUTE_PATHS.plans, element: <PlansPage />, handle: { title: 'Plany' } },
+      { path: PLAN_PATHS.create, element: <PlanCreatePage />, handle: { title: 'Nowy plan' } },
+      {
+        path: PLAN_PATHS.plan(':planId'),
+        element: <PlanEditorPage />,
+        handle: { title: 'Plan treningowy' },
+      },
+      {
+        path: PLAN_PATHS.day(':planId', ':dayId'),
+        element: <DayEditorPage />,
+        handle: { title: 'Dzień treningowy' },
+      },
       {
         path: EXERCISE_PATHS.list,
         element: <ExerciseListPage />,

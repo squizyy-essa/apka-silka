@@ -60,6 +60,13 @@ export const SCHEMA_VERSIONS: readonly SchemaVersion[] = [
         });
     },
   },
+  {
+    version: 3,
+    description: 'Superset groups of a plan day (rest after a round).',
+    stores: {
+      supersetGroups: 'id, planDayId',
+    },
+  },
 ];
 
 /** Throws when the version list is not a gap-free, ascending sequence starting at 1. */

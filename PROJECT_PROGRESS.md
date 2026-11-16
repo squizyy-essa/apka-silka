@@ -4,7 +4,7 @@ Ten plik jest pamięcią projektu między sesjami pracy. **Na początku każdej 
 go w całości, potem `docs/ARCHITECTURE.md`, i dopiero wtedy zmieniaj kod.** Po każdej fazie
 zaktualizuj wszystkie sekcje.
 
-Ostatnia aktualizacja: 2026-11-16 (ukończone fazy 1 i 2; z fazy 8 przeniesiono instalację na ekranie początkowym).
+Ostatnia aktualizacja: 2026-11-16 (ukończone fazy 1–3; z fazy 8 przeniesiono instalację na ekranie początkowym i powiadomienie o aktualizacji).
 
 ## Jak wznowić pracę
 
@@ -13,7 +13,7 @@ Ostatnia aktualizacja: 2026-11-16 (ukończone fazy 1 i 2; z fazy 8 przeniesiono 
    `docs/ARCHITECTURE.md`.
 2. `npm install`, potem `npm run check` i `npm run test:e2e` – wszystko musi być zielone, zanim
    zaczniesz cokolwiek zmieniać.
-3. Następna faza do zrobienia: **faza 3 – kreator planów** (lista zadań niżej).
+3. Następna faza do zrobienia: **faza 4 – aktywny trening** (lista zadań niżej).
 4. Zasady, których nie wolno łamać: żadnych makiet ani fikcyjnych danych; widoczna kontrolka =
    działająca funkcja; zapis do IndexedDB, nie do stanu komponentu; wydanej wersji schematu bazy
    się nie edytuje (nowa wersja + migracja); funkcja jest „ukończona” dopiero po testach.
@@ -116,22 +116,75 @@ Ograniczenia tej fazy:
 - Pole numeryczne z obsługą przecinka (62,5) przeniesione do fazy 3 – tam jest pierwszy raz potrzebne.
 - Przetwarzanie obrazów sprawdzone w Chrome; na iPhonie (Safari, zdjęcia HEIC) do potwierdzenia.
 
+### Faza 3 – Kreator planów ✅ (2026-11-16)
+
+Kryterium: „można zbudować i zapisać kompletny plan Push/Pull/Legs” – spełnione; test
+akceptacyjny A przechodzi w prawdziwej przeglądarce (plan z 3 dniami, 7 ćwiczeniami i seriami
+z przykładu ze specyfikacji jest identyczny po odświeżeniu).
+
+Co rzeczywiście działa (sekcja Plany):
+
+- **Wiele planów:** tworzenie, edycja nazwy/opisu/trybu, duplikowanie (głęboka kopia z nowymi
+  identyfikatorami), archiwizacja i przywracanie, usuwanie z potwierdzeniem, „ustaw jako główny”
+  (zawsze dokładnie jeden; pierwszy plan staje się główny sam). Archiwizacja i usunięcie planu
+  nie ruszają zapisanych sesji (przypadek 27, test).
+- **Tryb stały i elastyczny** osobno dla planu; w stałym dniowi można przypisać dzień tygodnia,
+  w elastycznym nowe dni dostają nazwy „Trening A/B/C”.
+- **Dni:** dodawanie, zmiana nazwy, kolejność, duplikowanie, usuwanie z potwierdzeniem.
+- **Ćwiczenia dnia:** wybór z biblioteki (okno z wyszukiwarką i filtrem partii), usuwanie,
+  kolejność. Nowe ćwiczenie dostaje 3 puste serie robocze, przerwę z ustawień (90 s) i skok
+  progresji 2,5 kg.
+- **Serie:** każda ma własny typ (robocza/rozgrzewkowa) i wartości: ciężar, powtórzenia od–do,
+  RIR; dla ćwiczeń na czas – sekundy, na dystans – metry (+ ciężar). Dodawanie (kopiuje
+  poprzednią), usuwanie. Pola przyjmują „62,5” i „62.5”; puste pole to brak wartości, nie zero;
+  błędna wartość jest oznaczana i nie jest zapisywana. Ciężar nie jest wymagany.
+- **Parametry ćwiczenia:** przerwa, skok progresji, tempo (jedno pole dla wszystkich serii),
+  notatka, zamienniki (bez duplikatów i bez samego ćwiczenia).
+- **Superserie:** łączenie z następnym ćwiczeniem (także 3+ ćwiczeń i scalanie dwóch superserii),
+  oznaczenie literą, przerwa po rundzie, wyłączenie jednego ćwiczenia, rozłączenie całości.
+  Reguła pilnowana w danych: superseria to co najmniej 2 sąsiadujące ćwiczenia
+  (`src/shared/logic/supersets.ts`); ćwiczenie upuszczone między dwa elementy superserii do niej
+  dołącza, wyciągnięte poza nią – wypada.
+- **Zmiana kolejności** dni i ćwiczeń: przeciąganie za uchwyt (mysz, dotyk – dnd-kit),
+  klawiatura (uchwyt → spacja → strzałki → spacja, z komunikatami dla czytników ekranu) oraz
+  pozycje menu „Przenieś wyżej / niżej”.
+- **Zapis:** każda zmiana zapisuje się od razu (bez przycisku „Zapisz”), w transakcji. Pola
+  tekstowe i liczbowe zapisują się po opuszczeniu pola, Enterze oraz gdy aplikacja idzie w tło.
+  Nieudany zapis = komunikat, a pole wraca do wartości z bazy.
+- **Schemat bazy v3:** tabela `supersetGroups` (przerwa po rundzie).
+
+Błędy znalezione przez testy i naprawione w tej fazie:
+
+- Dwa szybkie dotknięcia „Dodaj dzień” tworzyły dwa dni o tej samej nazwie → nazwa i pozycja
+  są teraz liczone w transakcji.
+- Szybka edycja „Powt. od” i zaraz „Powt. do” mogła skasować pierwszą wartość (druga zmiana
+  używała nieaktualnej kopii) → każde pole zapisuje tylko siebie, a spójność zakresu ustala
+  warstwa danych.
+
+Ograniczenia tej fazy:
+
+- Tempo ustawia się wspólnie dla wszystkich serii ćwiczenia (model pozwala na osobne).
+- Przeciąganie dotykiem sprawdzone tylko myszą w Chrome – na iPhonie do potwierdzenia.
+- Usunięcie ćwiczenia z dnia nie pyta o potwierdzenie (usunięcie dnia i planu pyta).
+- Plan nie pokazuje jeszcze szacowanego czasu treningu (Pulpit, faza 4).
+- Zmiana trybu ze stałego na elastyczny zachowuje przypisane dni tygodnia w danych (wracają po
+  przełączeniu z powrotem), ale ich nie pokazuje.
+
 Czego **nie ma** (ekrany mówią o tym wprost i nie mają żadnych kontrolek):
 
-- Pulpit, Trening, Historia oraz plany treningowe w sekcji Plany – tylko informacja
-  „nie jest jeszcze wdrożone”.
+- Pulpit, Trening, Historia – tylko informacja „nie jest jeszcze wdrożone”.
 - W Ustawieniach działa tylko sekcja Wygląd; timer, przypomnienia i backup – faza 7.
 - Service worker i tryb offline – faza 8 (manifest, ikony i powiadomienie o aktualizacji już są).
 
-## Wyniki testów (2026-11-16, koniec fazy 2)
+## Wyniki testów (2026-11-16, koniec fazy 3)
 
 | Sprawdzenie | Polecenie | Wynik |
 |---|---|---|
 | TypeScript strict | `npm run typecheck` | 0 błędów |
 | ESLint | `npm run lint` | 0 błędów, 0 ostrzeżeń |
-| Testy jednostkowe i komponentowe | `npm test` | 134 / 134 (10 plików) |
-| Build produkcyjny | `npm run build` | OK – JS 710 kB (223 kB gzip) |
-| Testy e2e (Chrome, build produkcyjny) | `npm run test:e2e` | 28 / 28 |
+| Testy jednostkowe i komponentowe | `npm test` | 196 / 196 (14 plików) |
+| Build produkcyjny | `npm run build` | OK |
+| Testy e2e (Chrome, build produkcyjny) | `npm run test:e2e` | 38 / 38 |
 | Build pod podścieżką (jak GitHub Pages) | ręcznie | działa, zapis ustawień OK, 0 błędów konsoli |
 | GitHub Actions – zadanie `check-and-build` | automatycznie po pushu | OK (typy, lint, testy, build na serwerach GitHuba) |
 | GitHub Actions – zadanie `deploy` | automatycznie po pushu | OK po włączeniu Pages; aplikacja: https://squizyy-essa.github.io/apka-silka/ |
@@ -173,6 +226,12 @@ Uzasadnienia w `docs/ARCHITECTURE.md` (§2 „Odstępstwa”).
 15. Biblioteka ćwiczeń jest podekranem sekcji Plany (`/plany/cwiczenia`).
 16. Lista ćwiczeń jest filtrowana w pamięci (biblioteka ma dziesiątki–setki pozycji).
 17. Testy używające obrazów (Blob) działają w środowisku Node, nie jsdom (klonowanie Blob).
+18. Kreator planów zapisuje każdą zmianę od razu (autosave), bez przycisku „Zapisz”.
+19. Każde pole zapisuje wyłącznie własną wartość; reguły zależne od innych pól (zakres
+    powtórzeń, kolejność, superserie) rozstrzyga repozytorium w transakcji na aktualnych danych.
+20. Superseria = osobny rekord `supersetGroups` + `supersetGroupId` w ćwiczeniach planu;
+    w superserii obowiązuje przerwa po rundzie, własne przerwy ćwiczeń są zachowane na później.
+21. Adresy: `/plany/nowy`, `/plany/plan/:planId`, `/plany/plan/:planId/dzien/:dayId`.
 
 ## Znane problemy i ograniczenia
 
@@ -183,6 +242,11 @@ Uzasadnienia w `docs/ARCHITECTURE.md` (§2 „Odstępstwa”).
 - Test klawiatury w e2e przytrzymuje strzałkę (`down`/`up`), bo grupa radio Radix wybiera opcję
   przy fokusie tylko wtedy, gdy klawisz jest wciśnięty; błyskawiczne syntetyczne naciśnięcie
   byłoby pominięte. Prawdziwej klawiatury to nie dotyczy.
+- Test komponentowy „sets another plan as primary…” (`plans.test.tsx`) raz na kilkanaście
+  uruchomień nie przeszedł; przyczyna nieustalona (prawdopodobnie zależność czasowa w teście).
+  Obserwować; jeśli się powtórzy – zdiagnozować.
+- Test e2e zmiany kolejności klawiaturą ma krótką pauzę po „podniesieniu” elementu: biblioteka
+  dnd-kit potrzebuje chwili na pomiar wierszy, zanim przyjmie strzałkę.
 - Workflow używa akcji `actions/*@v4` (`upload-pages-artifact@v3`), które GitHub oznacza jako
   oparte na przestarzałym Node 20 (na razie tylko ostrzeżenie). Do podniesienia wersji akcji.
 - iOS: osobne dane dla Safari i aplikacji z ekranu początkowego; możliwe czyszczenie danych
@@ -191,24 +255,31 @@ Uzasadnienia w `docs/ARCHITECTURE.md` (§2 „Odstępstwa”).
 
 ## Kolejne zadania
 
-### Faza 3 – Kreator planów (następna)
+### Faza 4 – Aktywny trening (następna)
 
-- [ ] Repozytorium planów: plany, dni, ćwiczenia planu, serie – operacje wielorekordowe w
-      transakcjach; duplikowanie planu i dnia; archiwizacja; „ustaw jako główny” (tylko jeden);
-      usunięcie planu bez ruszania sesji.
-- [ ] Lista planów w sekcji Plany (zastępuje obecną informację o braku modułu).
-- [ ] Kreator: dni (dodaj, nazwij, kolejność, duplikuj, dzień tygodnia w trybie stałym),
-      wybór ćwiczeń z biblioteki, serie rozgrzewkowe/robocze z indywidualnymi wartościami,
-      zakres powtórzeń, RIR, przerwa, tempo, czas/dystans wg rodzaju pomiaru, skok progresji,
-      notatki, zamienniki, superserie (łączenie, rozłączanie, przerwa po rundzie).
-- [ ] Pole numeryczne przyjmujące „62,5” i „62.5”; puste pole ≠ 0.
-- [ ] Przeciąganie (dnd-kit, mysz i dotyk) + przyciski „w górę / w dół” jako alternatywa.
-- [ ] Zaprojektować pole/encję dla przerwy po rundzie superserii (schemat v3).
-- [ ] Testy: repozytorium, kreator, e2e test akceptacyjny A (plan Push/Pull/Legs po odświeżeniu).
+- [ ] Zustand (stan interfejsu aktywnej sesji), date-fns w razie potrzeby.
+- [ ] Repozytorium sesji: start z dnia planu (migawka ćwiczeń, serii, przerw, superserii –
+      w tym przerwy po rundzie; schemat v4, jeśli potrzebne pola), pusty trening, jedna aktywna
+      sesja (sprawdzane w transakcji), wznowienie, porzucenie, zakończenie.
+- [ ] Ekran treningu: widok tabeli i widok kart (przełączanie bez utraty danych, zapamiętane
+      w ustawieniach), statusy serii (oczekująca / wykonana / nieudana / pominięta), zapis każdej
+      zmiany od razu, „Poprzedni wynik” wg identyfikatora ćwiczenia.
+- [ ] Edycje w trakcie: ciężar, powtórzenia, RIR, dodanie/usunięcie serii, zamiana ćwiczenia
+      (zamienniki z planu), kolejność, pominięcie, notatka, seria nieudana z rzeczywistym wynikiem.
+      Bez zmiany planu; osobna akcja „Zapisz zmiany do planu” z potwierdzeniem (opcjonalna).
+- [ ] Timer odpoczynku liczony ze znaczników czasu (`restTimerState`), pauza, ±15 s, pominięcie,
+      dźwięk z obsługą blokady, przerwa po rundzie superserii.
+- [ ] Wznawianie po zamknięciu aplikacji („Czy chcesz wznowić trening?”), porzucenie z potwierdzeniem.
+- [ ] Zakończenie i podsumowanie (§10): czasy, liczba serii, objętość robocza, partie, notatka,
+      samopoczucie 1–5. Rekordy i porównanie z poprzednim treningiem – faza 6.
+- [ ] Pulpit: najbliższy trening, szybki start, wznowienie.
+- [ ] Biblioteka: sekcja „Ostatnio używane” zacznie się pokazywać; ostrzeżenie przy zmianie
+      rodzaju pomiaru ćwiczenia z historią.
+- [ ] Testy: reguły sesji, objętość, timer (czas wstrzyknięty), e2e testy akceptacyjne B i F.
 
 ### Później
 
-Fazy 3–8 według tabeli w `docs/ARCHITECTURE.md` §6.
+Fazy 5–8 według tabeli w `docs/ARCHITECTURE.md` §6.
 
 ## Do zrobienia przez właściciela projektu
 
