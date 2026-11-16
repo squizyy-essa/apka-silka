@@ -130,6 +130,29 @@ test('acceptance test F: close the app mid-workout → asked to resume, every se
   await finishSet(page, BENCH, 2, { kg: '62,5', reps: '11' });
   await enter(row(page, BENCH, 3).getByRole('textbox', { name: 'kg', exact: true }), '57,5');
   await expect(page.getByRole('article', { name: BENCH })).toContainText('Zrobione serie: 2 z 3');
+  // Saving is asynchronous (a few milliseconds): make sure the last typed value
+  // reached the database before the tab is killed.
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          new Promise<boolean>((resolve) => {
+            const open = indexedDB.open('training-planner');
+            open.onsuccess = () => {
+              const request = open.result.transaction('sessionSets').objectStore('sessionSets').getAll();
+              request.onsuccess = () => {
+                open.result.close();
+                resolve(
+                  (request.result as { actualWeightKg?: number }[]).some(
+                    (set) => set.actualWeightKg === 57.5,
+                  ),
+                );
+              };
+            };
+          }),
+      ),
+    )
+    .toBe(true);
 
   // 3. Close the app (the tab) … 4. … and open it again.
   await page.close();

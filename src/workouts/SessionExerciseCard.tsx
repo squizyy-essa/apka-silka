@@ -10,6 +10,7 @@ import { ActionMenu } from '@/shared/ui/ActionMenu';
 import { AutosaveTextField, NumericField } from '@/shared/ui/autosaveFields';
 import { Badge } from '@/shared/ui/Badge';
 import { Button } from '@/shared/ui/Button';
+import { RirHelp } from '@/shared/ui/RirHelp';
 import { DoneButton, SetFields } from './SetControls';
 import { setMenuItems } from './setMenu';
 import {
@@ -263,6 +264,7 @@ export function SessionExerciseCard({
           </Button>
           <PreviousResultPanel key={exercise.exerciseId} item={item} repository={repository} />
         </div>
+        {(measurementType === 'weight_reps' || measurementType === 'bodyweight_reps') && <RirHelp />}
 
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-[10rem_1fr]">
           {inSuperset ? (

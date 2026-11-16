@@ -6,6 +6,7 @@ import { nextPendingSet, type SessionExerciseWithSets } from '@/shared/logic/wor
 import { Badge } from '@/shared/ui/Badge';
 import { Button } from '@/shared/ui/Button';
 import { IconButton } from '@/shared/ui/IconButton';
+import { RirHelp } from '@/shared/ui/RirHelp';
 import { SetFields } from './SetControls';
 import { describePlan, SET_STATUS_LABELS, SET_TYPE_LABELS } from './workoutText';
 
@@ -90,6 +91,9 @@ export function CardsView({ exercises, supersetLabels, repository, run, onFinish
         repository={repository}
         run={run}
       />
+
+      {(exercise.measurementTypeSnapshot === 'weight_reps' ||
+        exercise.measurementTypeSnapshot === 'bodyweight_reps') && <RirHelp className="mt-1" />}
 
       <div className="mt-4 grid gap-2">
         {set.status === 'pending' ? (

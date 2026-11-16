@@ -76,6 +76,21 @@ describe('workout', () => {
     expect(first.getByRole('textbox', { name: 'Powt.' })).toHaveAttribute('placeholder', '8–12');
   });
 
+  it('explains the RIR abbreviation on request, for rep-based exercises', async () => {
+    const user = userEvent.setup();
+    const databaseName = nextDatabaseName();
+    await seedPlan(databaseName);
+    renderApp(databaseName, '/trening');
+    await user.click(await screen.findByRole('button', { name: 'Rozpocznij: Push' }));
+    const card = await benchCard();
+
+    const explanation = card.getByText(/powtórzenia w zapasie/);
+    expect(explanation).not.toBeVisible();
+    await user.click(card.getByText('Co to jest RIR?'));
+    expect(explanation).toBeVisible();
+    expect(card.getByText(/puste\s+oznacza „nie podano”, a nie zero/)).toBeInTheDocument();
+  });
+
   it('acceptance test B: change weight, finish a set (timer starts), fail another, finish – history has the real data', async () => {
     const user = userEvent.setup();
     const databaseName = nextDatabaseName();

@@ -17,6 +17,7 @@ import { ActionMenu, type ActionMenuItem } from '@/shared/ui/ActionMenu';
 import { AutosaveTextField, NumericField } from '@/shared/ui/autosaveFields';
 import { Button } from '@/shared/ui/Button';
 import { IconButton } from '@/shared/ui/IconButton';
+import { RirHelp } from '@/shared/ui/RirHelp';
 import { describeSets } from './planText';
 import { ignoreRejection, type RunSave } from './saveErrors';
 
@@ -173,6 +174,7 @@ export function PlannedExerciseCard({
   const [pickingAlternative, setPickingAlternative] = useState(false);
   const name = exercise?.name ?? 'Nieznane ćwiczenie';
   const measurementType = exercise?.measurementType ?? 'weight_reps';
+  const usesReps = measurementType === 'weight_reps' || measurementType === 'bodyweight_reps';
   const inSuperset = planned.supersetGroupId !== undefined;
   const isLast = position.index === position.total - 1;
   const bodyId = `planned-${planned.id}`;
@@ -260,13 +262,16 @@ export function PlannedExerciseCard({
               />
             ))}
           </ol>
-          <Button
-            variant="secondary"
-            icon={<Plus className="size-4" aria-hidden="true" />}
-            onClick={() => ignoreRejection(run(repository.addSet(planned.id)))}
-          >
-            Dodaj serię
-          </Button>
+          <div className="flex flex-wrap items-start gap-x-3 gap-y-1">
+            <Button
+              variant="secondary"
+              icon={<Plus className="size-4" aria-hidden="true" />}
+              onClick={() => ignoreRejection(run(repository.addSet(planned.id)))}
+            >
+              Dodaj serię
+            </Button>
+            {usesReps && <RirHelp className="min-w-0 flex-1 basis-40" />}
+          </div>
 
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {inSuperset ? (
