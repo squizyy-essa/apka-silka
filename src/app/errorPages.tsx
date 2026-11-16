@@ -1,11 +1,9 @@
 import { Compass, TriangleAlert } from 'lucide-react';
 import { Link, useRouteError } from 'react-router';
 import { Button } from '@/shared/ui/Button';
+import { buttonStyles } from '@/shared/ui/buttonStyles';
 import { EmptyState } from '@/shared/ui/states';
 import { ROUTE_PATHS } from './navigation';
-
-const linkButtonClass =
-  'inline-flex min-h-11 items-center justify-center rounded-control bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors duration-150 hover:bg-primary-hover';
 
 export function NotFoundPage() {
   return (
@@ -14,7 +12,7 @@ export function NotFoundPage() {
       title="Nie znaleziono strony"
       description="Ten adres nie prowadzi do żadnego ekranu aplikacji."
       action={
-        <Link to={ROUTE_PATHS.dashboard} className={linkButtonClass}>
+        <Link to={ROUTE_PATHS.dashboard} className={buttonStyles()}>
           Wróć na pulpit
         </Link>
       }

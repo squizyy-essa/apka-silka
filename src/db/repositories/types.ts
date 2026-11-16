@@ -1,4 +1,4 @@
-import type { AppSettings, AppSettingsPatch } from '@/shared/domain';
+import type { AppSettings, AppSettingsPatch, Exercise } from '@/shared/domain';
 import type { StorageError } from '../errors';
 
 /**
@@ -36,7 +36,47 @@ export interface SettingsRepository {
   ): Unsubscribe;
 }
 
+/** The user-editable part of an exercise. */
+export type ExerciseDraft = Pick<
+  Exercise,
+  | 'name'
+  | 'description'
+  | 'category'
+  | 'primaryMuscle'
+  | 'secondaryMuscles'
+  | 'equipment'
+  | 'measurementType'
+>;
+
+export type ExerciseImageChange =
+  | { readonly kind: 'keep' }
+  | { readonly kind: 'remove' }
+  | { readonly kind: 'replace'; readonly blob: Blob };
+
+export interface ExerciseRepository {
+  /** Whole library (built-in + custom), re-emitted after every change, also from another tab. */
+  observeAll(
+    listener: (exercises: Exercise[]) => void,
+    onError?: (error: StorageError) => void,
+  ): Unsubscribe;
+  list(): Promise<Exercise[]>;
+  get(id: string): Promise<Exercise | undefined>;
+  createCustom(draft: ExerciseDraft, image?: ExerciseImageChange): Promise<Exercise>;
+  /** Rejects with `ExerciseRuleError` for built-in or missing exercises. */
+  updateCustom(id: string, draft: ExerciseDraft, image?: ExerciseImageChange): Promise<Exercise>;
+  /**
+   * Removes a custom exercise and its image. Workout history is unaffected
+   * (sessions keep their own snapshot). Rejects with `ExerciseRuleError` when
+   * the exercise is built-in or still used in a training plan.
+   */
+  deleteCustom(id: string): Promise<void>;
+  getImage(imageId: string): Promise<Blob | undefined>;
+  /** Ids of exercises from the most recent workouts, most recent first, without duplicates. */
+  listRecentlyUsedIds(limit: number): Promise<string[]>;
+}
+
 /** Grows with each phase as modules get their repositories. */
 export interface Repositories {
   readonly settings: SettingsRepository;
+  readonly exercises: ExerciseRepository;
 }

@@ -17,6 +17,7 @@ function sampleExercise(name: string): Exercise {
   return {
     id: newId(),
     name,
+    category: 'compound',
     primaryMuscle: 'chest',
     secondaryMuscles: ['triceps'],
     equipment: 'barbell',
@@ -107,7 +108,9 @@ describe('TrainingDatabase', () => {
       {
         version: CURRENT_SCHEMA_VERSION + 1,
         description: 'Test-only migration',
-        stores: { exercises: 'id, name, primaryMuscle, equipment, updatedAt, measurementType' },
+        stores: {
+          exercises: 'id, name, primaryMuscle, equipment, category, updatedAt, measurementType',
+        },
         upgrade: async (transaction) => {
           await transaction
             .table('exercises')
@@ -134,6 +137,26 @@ describe('TrainingDatabase', () => {
       visualStyle: 'performance',
     });
     upgraded.close();
+  });
+
+  it('v1 → v2: existing exercises get a category and stay otherwise unchanged', async () => {
+    const name = nextDatabaseName();
+    const legacyExercise: Record<string, unknown> & { id: string } = {
+      ...sampleExercise('Stare ćwiczenie'),
+    };
+    delete legacyExercise.category;
+
+    const v1 = new TrainingDatabase(name, SCHEMA_VERSIONS.slice(0, 1));
+    await v1.table('exercises').add(legacyExercise);
+    v1.close();
+
+    const current = new TrainingDatabase(name);
+    expect(await current.exercises.get(legacyExercise.id)).toEqual({
+      ...legacyExercise,
+      category: 'compound',
+    });
+    expect(await current.exercises.where('category').equals('compound').count()).toBe(1);
+    current.close();
   });
 
   it('rolls a failed migration back and leaves the data at the previous version', async () => {

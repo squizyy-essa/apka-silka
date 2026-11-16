@@ -66,7 +66,8 @@ e2e/              testy Playwright (na buildzie produkcyjnym)
 docs/             dokumentacja
 ```
 
-Moduły dochodzące w kolejnych fazach: `exercises/` (2), `progression/` (5), `calendar/`,
+Jest też `exercises/` (biblioteka ćwiczeń) i `db/seed/` (gotowa biblioteka). Moduły dochodzące
+w kolejnych fazach: `progression/` (5), `calendar/`,
 `measurements/` (6), `backup/`, `notifications/` (7).
 
 ### Zasady zależności
@@ -91,7 +92,7 @@ Moduły dochodzące w kolejnych fazach: `exercises/` (2), `progression/` (5), `c
   (`openVerified`) – użytkownik dostaje prośbę o odświeżenie zamiast ryzyka zapisu w starym formacie.
 - Gdy inna karta podnosi wersję schematu, bieżąca karta zwalnia połączenie (nie blokuje migracji)
   i prosi o odświeżenie.
-- Wersja 1 zawiera wszystkie encje z §17: `exercises`, `exerciseMedia`, `trainingPlans`,
+- Wersja 2 dodaje ćwiczeniom pole `category`. Wersja 1 zawiera wszystkie encje z §17: `exercises`, `exerciseMedia`, `trainingPlans`,
   `planDays`, `plannedExercises`, `plannedSets`, `workoutSessions`, `sessionExercises`,
   `sessionSets`, `bodyMeasurements`, `appSettings`, `restTimerState`.
 - Do zaprojektowania w swoich fazach (jako kolejne wersje schematu): sugestie progresji i
@@ -184,7 +185,7 @@ Stan: ✅ obsłużone i przetestowane, ◐ częściowo (fundament gotowy), ⏳ z
 | 2 | Odświeżenie strony | jak wyżej; ten sam ekran (adres), te same ustawienia | 1/4 | ◐ ustawienia i adresy ✅ |
 | 3 | Dwie karty | wspólna baza, zmiany widoczne na żywo; jedna aktywna sesja; migracja w jednej karcie → druga prosi o odświeżenie | 1/4 | ◐ ustawienia i migracja ✅ |
 | 4 | Próba rozpoczęcia drugiego treningu | sprawdzenie w transakcji; zamiast drugiej sesji propozycja wznowienia lub porzucenia istniejącej | 4 | ⏳ |
-| 5 | Usunięcie ćwiczenia użytego w historii | historia zostaje (migawka nazwy i typu w sesji); ćwiczenie znika tylko z biblioteki | 2/4 | ⏳ |
+| 5 | Usunięcie ćwiczenia użytego w historii | historia zostaje (migawka nazwy i typu w sesji); ćwiczenie znika tylko z biblioteki | 2/4 | ◐ usuwanie ✅ |
 | 6 | Edycja planu podczas aktywnego treningu | sesja działa na migawce z chwili startu; plan zmienia się niezależnie | 4 | ⏳ |
 | 7 | Usunięcie serii | usuwana tylko z sesji, kolejność przeliczona; plan bez zmian | 4 | ⏳ |
 | 8 | Zmiana kolejności ćwiczeń | nowa kolejność zapisana w sesji (lub w planie w kreatorze) | 3/4 | ⏳ |
@@ -205,7 +206,7 @@ Stan: ✅ obsłużone i przetestowane, ◐ częściowo (fundament gotowy), ⏳ z
 | 23 | Import ze starszej wersji schematu | migracja danych importu do bieżącej wersji przed walidacją; nowsza wersja → odmowa | 7 | ⏳ |
 | 24 | Import z brakującymi relacjami | odmowa z listą problemów, baza nietknięta | 7 | ⏳ |
 | 25 | Błąd zapisu / brak miejsca | komunikat `StorageError`, ekran pokazuje stan z bazy, nic nie udaje zapisu | 1+ | ◐ ustawienia ✅ |
-| 26 | Brak ilustracji ćwiczenia | neutralny placeholder | 2 | ⏳ |
+| 26 | Brak ilustracji ćwiczenia | neutralny placeholder | 2 | ✅ |
 | 27 | Usunięcie planu z zachowaniem historii | sesje zostają (mają własną nazwę i migawki); odwołanie do planu może być puste | 3 | ⏳ |
 | 28 | Edycja historycznego treningu | ostrzeżenie; statystyki i rekordy liczone z danych, więc od razu aktualne | 6 | ⏳ |
 | 29 | Zmiana stylu i motywu | natychmiastowa, zapamiętana, bez wpływu na dane | 1 | ✅ |

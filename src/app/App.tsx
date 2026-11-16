@@ -7,6 +7,7 @@ import { SettingsProvider } from '@/settings/SettingsProvider';
 import { Button } from '@/shared/ui/Button';
 import { EmptyState, LoadingState } from '@/shared/ui/states';
 import { AppInfoContext, type AppInfo } from './appInfoContext';
+import { RepositoriesContext } from './repositoriesContext';
 import { createAppRuntime, type AppRuntime, type CreateAppRuntime } from './runtime';
 
 type BootState =
@@ -122,12 +123,14 @@ export function App({ router, createRuntime = createAppRuntime }: AppProps) {
 
   return (
     <AppInfoContext value={appInfo}>
-      <SettingsProvider
-        repository={state.runtime.repositories.settings}
-        initialSettings={state.runtime.initialSettings}
-      >
-        <RouterProvider router={router} />
-      </SettingsProvider>
+      <RepositoriesContext value={state.runtime.repositories}>
+        <SettingsProvider
+          repository={state.runtime.repositories.settings}
+          initialSettings={state.runtime.initialSettings}
+        >
+          <RouterProvider router={router} />
+        </SettingsProvider>
+      </RepositoriesContext>
     </AppInfoContext>
   );
 }

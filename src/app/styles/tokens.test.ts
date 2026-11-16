@@ -108,10 +108,12 @@ describe('design tokens', () => {
       expect(contrast(color('primary-fg'), color('primary-hover'))).toBeGreaterThanOrEqual(4.5);
     });
 
-    it('focus ring and danger colour stand out from surfaces (≥ 3:1)', () => {
+    it('focus ring, field outline and danger colour stand out from surfaces (≥ 3:1)', () => {
       expect(contrast(color('ring'), color('surface'))).toBeGreaterThanOrEqual(3);
       expect(contrast(color('ring'), color('bg'))).toBeGreaterThanOrEqual(3);
       expect(contrast(color('danger'), color('surface'))).toBeGreaterThanOrEqual(3);
+      // Outline of form fields must be perceivable on its own.
+      expect(contrast(color('border-strong'), color('surface'))).toBeGreaterThanOrEqual(3);
       expect(contrast(color('text'), color('danger-soft'))).toBeGreaterThanOrEqual(4.5);
     });
   });

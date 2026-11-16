@@ -4,7 +4,7 @@ Ten plik jest pamięcią projektu między sesjami pracy. **Na początku każdej 
 go w całości, potem `docs/ARCHITECTURE.md`, i dopiero wtedy zmieniaj kod.** Po każdej fazie
 zaktualizuj wszystkie sekcje.
 
-Ostatnia aktualizacja: 2026-11-16 (faza 1 ukończona; z fazy 8 przeniesiono instalację na ekranie początkowym).
+Ostatnia aktualizacja: 2026-11-16 (ukończone fazy 1 i 2; z fazy 8 przeniesiono instalację na ekranie początkowym).
 
 ## Jak wznowić pracę
 
@@ -13,7 +13,7 @@ Ostatnia aktualizacja: 2026-11-16 (faza 1 ukończona; z fazy 8 przeniesiono inst
    `docs/ARCHITECTURE.md`.
 2. `npm install`, potem `npm run check` i `npm run test:e2e` – wszystko musi być zielone, zanim
    zaczniesz cokolwiek zmieniać.
-3. Następna faza do zrobienia: **faza 2 – biblioteka ćwiczeń** (lista zadań niżej).
+3. Następna faza do zrobienia: **faza 3 – kreator planów** (lista zadań niżej).
 4. Zasady, których nie wolno łamać: żadnych makiet ani fikcyjnych danych; widoczna kontrolka =
    działająca funkcja; zapis do IndexedDB, nie do stanu komponentu; wydanej wersji schematu bazy
    się nie edytuje (nowa wersja + migracja); funkcja jest „ukończona” dopiero po testach.
@@ -63,23 +63,60 @@ Na prośbę właściciela, żeby oglądać postępy na iPhonie z ikony.
 - Ekran startowy i pasek stanu w trybie pełnoekranowym mają stały jasny kolor z manifestu,
   niezależnie od wybranego motywu.
 
+### Faza 2 – Biblioteka ćwiczeń ✅ (2026-11-16)
+
+Kryterium: „można utworzyć, znaleźć, edytować i ponownie odczytać ćwiczenie po odświeżeniu
+strony” – spełnione, potwierdzone testem e2e w prawdziwej przeglądarce.
+
+Co rzeczywiście działa (ekran: Plany → Biblioteka ćwiczeń, adres `#/plany/cwiczenia`):
+
+- **Gotowa biblioteka:** 64 ćwiczenia siłowe z polskimi nazwami i własnymi opisami, wszystkie
+  11 partii i 8 rodzajów sprzętu. Wgrywana przy starcie w transakcji, bez duplikatów; stałe UUID
+  w `src/db/seed/systemExercises.ts` (po zmianie wpisu podnieść `SYSTEM_EXERCISES_REVISION`).
+- **Schemat bazy v2:** pole `category` (wielostawowe / izolowane / cardio / mobilność) z migracją
+  v1 → v2 (test).
+- **Wyszukiwanie i filtry:** po nazwie (bez względu na wielkość liter i polskie znaki, wszystkie
+  słowa w dowolnej kolejności), partia (główna najpierw, potem dodatkowa), sprzęt, kategoria.
+  Filtry są w adresie – przeżywają odświeżenie i Wstecz.
+- **Własne ćwiczenia:** tworzenie, edycja, usuwanie z potwierdzeniem; walidacja formularza
+  (React Hook Form + Zod) z komunikatami po polsku. Ćwiczeń systemowych nie da się edytować ani
+  usunąć (także przez bezpośredni adres).
+- **Ilustracje własnych ćwiczeń:** wybór pliku, zmniejszenie do maks. 1024 px i zapis jako JPEG
+  w `exerciseMedia` (zdjęcie 3000×2000 → 1024×683, < 400 kB); zamiana i usunięcie; odrzucenie
+  plików niebędących obrazami i uszkodzonych z wyjaśnieniem; placeholder przy braku obrazu.
+- **Ochrona danych:** usunięcie ćwiczenia nie rusza historii sesji (przypadek 5); ćwiczenia
+  użytego w planie (także jako zamiennik) nie da się usunąć.
+- **Na żywo:** zmiany w bibliotece widać od razu w drugiej otwartej karcie.
+- Nowe wspólne komponenty: pola formularza (tekst, obszar tekstu, select), ConfirmDialog, Badge,
+  BackLink, przycisk-link; token `border-strong` (kontrast obramowania pól ≥ 3:1).
+
+Ograniczenia tej fazy:
+
+- **„Ostatnio używane”**: zapytanie działa i jest przetestowane na danych testowych, ale sekcja
+  pojawi się w aplikacji dopiero, gdy będą treningi (faza 4). Do tego czasu jest ukryta.
+- Gotowe ćwiczenia nie mają ilustracji (brak grafik z odpowiednią licencją) – w liście placeholder.
+- Zmiana „rodzaju pomiaru” własnego ćwiczenia jest dozwolona zawsze; gdy będzie historia
+  (faza 4), trzeba dodać ostrzeżenie lub blokadę.
+- Formularz nie ostrzega przed wyjściem z niezapisanymi zmianami.
+- Pole numeryczne z obsługą przecinka (62,5) przeniesione do fazy 3 – tam jest pierwszy raz potrzebne.
+- Przetwarzanie obrazów sprawdzone w Chrome; na iPhonie (Safari, zdjęcia HEIC) do potwierdzenia.
+
 Czego **nie ma** (ekrany mówią o tym wprost i nie mają żadnych kontrolek):
 
-- Pulpit, Plany, Trening, Historia – tylko informacja „moduł nie jest jeszcze wdrożony”.
+- Pulpit, Trening, Historia oraz plany treningowe w sekcji Plany – tylko informacja
+  „nie jest jeszcze wdrożone”.
 - W Ustawieniach działa tylko sekcja Wygląd; timer, przypomnienia i backup – faza 7.
-- Tabele bazy poza `appSettings` istnieją, ale aplikacja jeszcze nic do nich nie zapisuje
-  (zapis/odczyt/migracja tych tabel są sprawdzone tylko w testach).
 - Service worker, tryb offline i obsługa aktualizacji – faza 8 (manifest i ikony już są).
 
-## Wyniki testów (2026-11-16, koniec fazy 1)
+## Wyniki testów (2026-11-16, koniec fazy 2)
 
 | Sprawdzenie | Polecenie | Wynik |
 |---|---|---|
 | TypeScript strict | `npm run typecheck` | 0 błędów |
 | ESLint | `npm run lint` | 0 błędów, 0 ostrzeżeń |
-| Testy jednostkowe i komponentowe | `npm test` | 90 / 90 (6 plików) |
-| Build produkcyjny | `npm run build` | OK – JS 590 kB (185 kB gzip), CSS 22 kB (5,5 kB gzip) |
-| Testy e2e (Chrome, build produkcyjny) | `npm run test:e2e` | 16 / 16 |
+| Testy jednostkowe i komponentowe | `npm test` | 125 / 125 (9 plików) |
+| Build produkcyjny | `npm run build` | OK – JS 710 kB (223 kB gzip) |
+| Testy e2e (Chrome, build produkcyjny) | `npm run test:e2e` | 25 / 25 |
 | Build pod podścieżką (jak GitHub Pages) | ręcznie | działa, zapis ustawień OK, 0 błędów konsoli |
 | GitHub Actions – zadanie `check-and-build` | automatycznie po pushu | OK (typy, lint, testy, build na serwerach GitHuba) |
 | GitHub Actions – zadanie `deploy` | automatycznie po pushu | OK po włączeniu Pages; aplikacja: https://squizyy-essa.github.io/apka-silka/ |
@@ -115,10 +152,16 @@ Uzasadnienia w `docs/ARCHITECTURE.md` (§2 „Odstępstwa”).
     (głośność 0,8), przypomnienia wyłączone.
 11. Pulpit (§4) budowany w fazach 4 i 6 (specyfikacja nie przypisała go do fazy).
 12. Typy pomiaru ćwiczenia: `weight_reps`, `bodyweight_reps`, `duration`, `distance`.
+13. „Kategoria” ćwiczenia (§6.1) = typ ruchu: `compound`, `isolation`, `cardio`, `mobility`.
+14. Usuwanie własnego ćwiczenia jest trwałe (bez kosza); historię chronią migawki w sesjach,
+    a plany – blokada usunięcia ćwiczenia użytego w planie.
+15. Biblioteka ćwiczeń jest podekranem sekcji Plany (`/plany/cwiczenia`).
+16. Lista ćwiczeń jest filtrowana w pamięci (biblioteka ma dziesiątki–setki pozycji).
+17. Testy używające obrazów (Blob) działają w środowisku Node, nie jsdom (klonowanie Blob).
 
 ## Znane problemy i ograniczenia
 
-- Paczka JS ma 590 kB (185 kB gzip) i Vite ostrzega o rozmiarze. Do zrobienia w fazie 8 (wcześniej,
+- Paczka JS ma 710 kB (223 kB gzip) i Vite ostrzega o rozmiarze. Do zrobienia w fazie 8 (wcześniej,
   jeśli zacznie przeszkadzać): ładowanie ekranów na żądanie.
 - `npm audit`: 7 zgłoszeń „moderate”, wszystkie w narzędziach deweloperskich (minimatch
   w typescript-eslint); nie trafiają do aplikacji.
@@ -133,22 +176,20 @@ Uzasadnienia w `docs/ARCHITECTURE.md` (§2 „Odstępstwa”).
 
 ## Kolejne zadania
 
-### Faza 2 – Biblioteka ćwiczeń (następna)
+### Faza 3 – Kreator planów (następna)
 
-- [ ] Moduł `src/exercises/`: repozytorium ćwiczeń (wyszukiwanie po nazwie, filtry: partia,
-      sprzęt, kategoria; ostatnio używane).
-- [ ] Zdecydować o polu „kategoria” (§6.1 wymienia je, §17 nie) → jeśli osobne pole, schemat v2
-      z migracją.
-- [ ] Początkowa biblioteka podstawowych ćwiczeń siłowych (polskie nazwy, opisy), ładowana przy
-      pierwszym uruchomieniu w transakcji, ze stałymi UUID; systemowe vs własne.
-- [ ] Ekran biblioteki (podekran sekcji Plany) + formularz własnego ćwiczenia
-      (React Hook Form + Zod): tworzenie, edycja, usuwanie z zachowaniem historii.
-- [ ] Ilustracje własnych ćwiczeń: wybór pliku, zmniejszanie i limit rozmiaru, zapis w
-      `exerciseMedia`, placeholder przy braku obrazu. Bez cudzych zdjęć.
-- [ ] Wspólne komponenty potrzebne od tej fazy: pole tekstowe, Select, Modal/BottomSheet,
-      ConfirmDialog, Toast, EmptyState z akcją.
-- [ ] Testy: repozytorium, wyszukiwanie/filtry, formularz, e2e „utwórz → znajdź → edytuj →
-      odśwież → nadal jest”.
+- [ ] Repozytorium planów: plany, dni, ćwiczenia planu, serie – operacje wielorekordowe w
+      transakcjach; duplikowanie planu i dnia; archiwizacja; „ustaw jako główny” (tylko jeden);
+      usunięcie planu bez ruszania sesji.
+- [ ] Lista planów w sekcji Plany (zastępuje obecną informację o braku modułu).
+- [ ] Kreator: dni (dodaj, nazwij, kolejność, duplikuj, dzień tygodnia w trybie stałym),
+      wybór ćwiczeń z biblioteki, serie rozgrzewkowe/robocze z indywidualnymi wartościami,
+      zakres powtórzeń, RIR, przerwa, tempo, czas/dystans wg rodzaju pomiaru, skok progresji,
+      notatki, zamienniki, superserie (łączenie, rozłączanie, przerwa po rundzie).
+- [ ] Pole numeryczne przyjmujące „62,5” i „62.5”; puste pole ≠ 0.
+- [ ] Przeciąganie (dnd-kit, mysz i dotyk) + przyciski „w górę / w dół” jako alternatywa.
+- [ ] Zaprojektować pole/encję dla przerwy po rundzie superserii (schemat v3).
+- [ ] Testy: repozytorium, kreator, e2e test akceptacyjny A (plan Push/Pull/Legs po odświeżeniu).
 
 ### Później
 

@@ -22,6 +22,7 @@ function sampleExercise(overrides: Partial<Exercise> = {}): Exercise {
   return {
     id: newId(),
     name: 'Podciąganie na drążku',
+    category: 'compound',
     primaryMuscle: 'back',
     secondaryMuscles: ['biceps'],
     equipment: 'bodyweight',

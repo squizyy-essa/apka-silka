@@ -88,3 +88,22 @@ export function toStorageError(error: unknown): StorageError {
       .find((candidate): candidate is StorageErrorKind => candidate !== undefined) ?? 'unknown';
   return new StorageError(kind, storageErrorMessage(kind), error);
 }
+
+export type ExerciseRuleViolation =
+  /** The exercise does not exist (any more). */
+  | 'not-found'
+  /** Built-in exercises cannot be edited or deleted. */
+  | 'system-exercise'
+  /** The exercise is part of at least one training plan. */
+  | 'used-in-plan';
+
+/** A requested change to the exercise library is not allowed. Nothing was written. */
+export class ExerciseRuleError extends Error {
+  readonly violation: ExerciseRuleViolation;
+
+  constructor(violation: ExerciseRuleViolation) {
+    super(`Exercise rule violated: ${violation}`);
+    this.name = 'ExerciseRuleError';
+    this.violation = violation;
+  }
+}

@@ -21,6 +21,7 @@
   --color-foreground: var(--tp-text);
   --color-muted-foreground: var(--tp-text-muted);
   --color-border: var(--tp-border);
+  --color-border-strong: var(--tp-border-strong);
   --color-primary: var(--tp-primary);
   --color-primary-hover: var(--tp-primary-hover);
   --color-primary-foreground: var(--tp-primary-fg);

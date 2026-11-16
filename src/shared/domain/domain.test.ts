@@ -19,6 +19,7 @@ function validExercise(overrides: Partial<Exercise> = {}): Exercise {
   return {
     id: newId(),
     name: 'Wyciskanie sztangi na ławce poziomej',
+    category: 'compound',
     primaryMuscle: 'chest',
     secondaryMuscles: ['triceps', 'shoulders'],
     equipment: 'barbell',

@@ -1,4 +1,9 @@
-import { createRepositories, TrainingDatabase, type Repositories } from '@/db';
+import {
+  createRepositories,
+  syncSystemExercises,
+  TrainingDatabase,
+  type Repositories,
+} from '@/db';
 import type { AppSettings } from '@/shared/domain';
 
 export interface AppRuntime {
@@ -35,6 +40,7 @@ export const createAppRuntime: CreateAppRuntime = async (options = {}) => {
   const repositories = createRepositories(db);
   try {
     await db.openVerified();
+    await syncSystemExercises(db);
     const initialSettings = await repositories.settings.load();
     return {
       repositories,

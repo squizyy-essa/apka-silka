@@ -1,6 +1,10 @@
 import type { RouteObject } from 'react-router';
 import { HistoryPage } from '@/analytics/HistoryPage';
 import { DashboardPage } from '@/dashboard/DashboardPage';
+import { ExerciseDetailPage } from '@/exercises/ExerciseDetailPage';
+import { ExerciseCreatePage, ExerciseEditPage } from '@/exercises/ExerciseFormPage';
+import { ExerciseListPage } from '@/exercises/ExerciseListPage';
+import { EXERCISE_PATHS } from '@/exercises/paths';
 import { PlansPage } from '@/plans/PlansPage';
 import { SettingsPage } from '@/settings/SettingsPage';
 import { WorkoutPage } from '@/workouts/WorkoutPage';
@@ -20,6 +24,26 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <DashboardPage />, handle: { title: 'Pulpit' } },
       { path: ROUTE_PATHS.plans, element: <PlansPage />, handle: { title: 'Plany' } },
+      {
+        path: EXERCISE_PATHS.list,
+        element: <ExerciseListPage />,
+        handle: { title: 'Biblioteka ćwiczeń' },
+      },
+      {
+        path: EXERCISE_PATHS.create,
+        element: <ExerciseCreatePage />,
+        handle: { title: 'Nowe ćwiczenie' },
+      },
+      {
+        path: EXERCISE_PATHS.detail(':exerciseId'),
+        element: <ExerciseDetailPage />,
+        handle: { title: 'Ćwiczenie' },
+      },
+      {
+        path: EXERCISE_PATHS.edit(':exerciseId'),
+        element: <ExerciseEditPage />,
+        handle: { title: 'Edycja ćwiczenia' },
+      },
       { path: ROUTE_PATHS.workout, element: <WorkoutPage />, handle: { title: 'Trening' } },
       {
         path: ROUTE_PATHS.history,

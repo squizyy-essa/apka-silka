@@ -45,6 +45,21 @@ export const SCHEMA_VERSIONS: readonly SchemaVersion[] = [
       restTimerState: 'sessionId',
     },
   },
+  {
+    version: 2,
+    description: 'Exercises get a category (compound / isolation / cardio / mobility).',
+    stores: {
+      exercises: 'id, name, primaryMuscle, equipment, category, updatedAt',
+    },
+    upgrade: async (transaction) => {
+      await transaction
+        .table('exercises')
+        .toCollection()
+        .modify((exercise: { category?: string }) => {
+          exercise.category ??= 'compound';
+        });
+    },
+  },
 ];
 
 /** Throws when the version list is not a gap-free, ascending sequence starting at 1. */

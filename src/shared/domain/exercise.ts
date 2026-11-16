@@ -43,10 +43,15 @@ export const measurementTypeSchema = z.enum([
 ]);
 export type MeasurementType = z.infer<typeof measurementTypeSchema>;
 
+/** Movement type; an independent filter next to muscle group and equipment. */
+export const exerciseCategorySchema = z.enum(['compound', 'isolation', 'cardio', 'mobility']);
+export type ExerciseCategory = z.infer<typeof exerciseCategorySchema>;
+
 export const exerciseSchema = z.object({
   id: idSchema,
   name: nameSchema,
   description: z.string().max(4000).optional(),
+  category: exerciseCategorySchema,
   primaryMuscle: muscleGroupSchema,
   secondaryMuscles: z.array(muscleGroupSchema),
   equipment: equipmentTypeSchema,

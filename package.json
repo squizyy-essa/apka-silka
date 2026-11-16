@@ -1,7 +1,7 @@
 {
   "name": "training-planner",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Planer treningowy (PWA, local-first)",
   "type": "module",
   "engines": {
@@ -19,6 +19,8 @@
     "check": "npm run typecheck && npm run lint && npm run test && npm run build"
   },
   "dependencies": {
+    "@hookform/resolvers": "^7.0.6",
+    "@radix-ui/react-alert-dialog": "^1.2.1",
     "@radix-ui/react-radio-group": "^1.5.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -27,6 +29,7 @@
     "lucide-react": "^1.73.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
+    "react-hook-form": "^7.92.0",
     "react-router": "^8.5.1",
     "tailwind-merge": "^3.7.0",
     "zod": "^4.6.7"

@@ -4,6 +4,8 @@ import { Card } from './Card';
 export interface PlannedModuleNoticeProps {
   /** Implementation phase (see docs/ARCHITECTURE.md) in which the module arrives. */
   readonly phase: number;
+  /** Names what is missing when the screen also has working parts. */
+  readonly title?: string;
   /** What the module will do, in user terms. */
   readonly scope: readonly string[];
 }
@@ -12,7 +14,11 @@ export interface PlannedModuleNoticeProps {
  * Honest placeholder for a section that is not implemented yet. It states
  * that plainly and offers no controls, so nothing on screen pretends to work.
  */
-export function PlannedModuleNotice({ phase, scope }: PlannedModuleNoticeProps) {
+export function PlannedModuleNotice({
+  phase,
+  scope,
+  title = 'Ten moduł nie jest jeszcze wdrożony',
+}: PlannedModuleNoticeProps) {
   return (
     <Card>
       <div className="flex items-start gap-3">
@@ -20,9 +26,7 @@ export function PlannedModuleNotice({ phase, scope }: PlannedModuleNoticeProps) 
           <Construction className="size-5" aria-hidden="true" />
         </span>
         <div>
-          <h2 className="text-base font-semibold text-foreground">
-            Ten moduł nie jest jeszcze wdrożony
-          </h2>
+          <h2 className="text-base font-semibold text-foreground">{title}</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Wdrożenie zaplanowane od fazy {phase} projektu. Docelowo znajdziesz tu:
           </p>
