@@ -255,7 +255,25 @@ Uzasadnienia w `docs/ARCHITECTURE.md` (§2 „Odstępstwa”).
 
 ## Kolejne zadania
 
-### Faza 4 – Aktywny trening (następna)
+### Faza 4 – Aktywny trening (W TOKU – przerwana 2026-11-16 z powodu limitu sesji)
+
+**Zrobione i przetestowane (tylko warstwa danych, bez ekranów – użytkownik nic nowego nie widzi):**
+
+- Model: `SessionExercise` ma migawki z planu (`restSecondsSnapshot`,
+  `progressionIncrementKgSnapshot`, `supersetRestSecondsSnapshot`,
+  `alternativeExerciseIdsSnapshot`), `SessionSet` ma `plannedDurationSeconds`,
+  `plannedDistanceMeters`, `tempo`. Bez nowej wersji schematu (pola nieindeksowane, tabele sesji
+  były puste we wszystkich wydanych wersjach).
+- `SessionRepository` (`src/db/repositories/dexieSessionRepository.ts`): `startFromPlanDay`
+  (migawka ćwiczeń, serii, przerw, superserii), `startEmpty`, `getActive`, `observeActive`,
+  `abandon`. Jedna aktywna sesja pilnowana w transakcji (test z podwójnym startem i drugą kartą).
+- `localDateOf` (`src/shared/lib/localDate.ts`) – lokalna data treningu.
+- Testy: `sessionRepository.test.ts` (10 testów).
+
+**Następny krok – zacząć tutaj:** rozszerzyć `SessionRepository` o zapis serii
+(`updateSet`, `completeSet`/`failSet`/`skipSet`, `addSet`, `removeSet`), pominięcie i zamianę
+ćwiczenia, kolejność, notatki, `finish` (z oceną samopoczucia), a potem ekran treningu.
+Pozostałe punkty poniżej są nietknięte.
 
 - [ ] Zustand (stan interfejsu aktywnej sesji), date-fns w razie potrzeby.
 - [ ] Repozytorium sesji: start z dnia planu (migawka ćwiczeń, serii, przerw, superserii –

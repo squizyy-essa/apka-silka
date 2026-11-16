@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { measurementTypeSchema } from './exercise';
 import {
   idSchema,
+  incrementKgSchema,
   isoDateTimeSchema,
   localDateSchema,
   metersSchema,
@@ -44,6 +45,13 @@ export const sessionExerciseSchema = z.object({
   measurementTypeSnapshot: measurementTypeSchema,
   order: orderSchema,
   supersetGroupId: idSchema.optional(),
+  /** Plan values copied at session start, so later plan edits never change the session. */
+  restSecondsSnapshot: secondsSchema,
+  progressionIncrementKgSnapshot: incrementKgSchema,
+  /** Rest after a full superset round; set on every member of the superset. */
+  supersetRestSecondsSnapshot: secondsSchema.optional(),
+  /** Alternatives offered when swapping the exercise during the workout. */
+  alternativeExerciseIdsSnapshot: z.array(idSchema),
   notes: noteSchema.optional(),
   isSkipped: z.boolean(),
 });
@@ -67,6 +75,9 @@ export const sessionSetSchema = z
     actualReps: repsSchema.optional(),
     plannedRIR: rirSchema.optional(),
     actualRIR: rirSchema.optional(),
+    plannedDurationSeconds: secondsSchema.optional(),
+    plannedDistanceMeters: metersSchema.optional(),
+    tempo: z.string().max(20).optional(),
     durationSeconds: secondsSchema.optional(),
     distanceMeters: metersSchema.optional(),
     completedAt: isoDateTimeSchema.optional(),

@@ -210,6 +210,9 @@ describe('exercise repository', () => {
       exerciseNameSnapshot: created.name,
       measurementTypeSnapshot: created.measurementType,
       order: 0,
+      restSecondsSnapshot: 90,
+      progressionIncrementKgSnapshot: 2.5,
+      alternativeExerciseIdsSnapshot: [],
       isSkipped: false,
     };
     await db.sessionExercises.add(sessionExercise);
@@ -312,6 +315,9 @@ describe('exercise repository', () => {
           exerciseNameSnapshot: 'x',
           measurementTypeSnapshot: 'weight_reps' as const,
           order,
+          restSecondsSnapshot: 90,
+          progressionIncrementKgSnapshot: 2.5,
+          alternativeExerciseIdsSnapshot: [],
           isSkipped,
         })),
       );

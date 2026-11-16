@@ -6,8 +6,11 @@ import type {
   PlannedExercise,
   PlannedSet,
   ScheduleMode,
+  SessionExercise,
+  SessionSet,
   SupersetGroup,
   TrainingPlan,
+  WorkoutSession,
 } from '@/shared/domain';
 import type { StorageError } from '../errors';
 
@@ -213,9 +216,43 @@ export interface PlanRepository {
   setTempoForAllSets(plannedExerciseId: string, tempo: string | undefined): Promise<void>;
 }
 
+export interface SessionDetail {
+  readonly session: WorkoutSession;
+  /** Exercises in workout order, each with its sets in order. */
+  readonly exercises: readonly {
+    readonly exercise: SessionExercise;
+    readonly sets: readonly SessionSet[];
+  }[];
+}
+
+/**
+ * Workout sessions. At most one session is `active` at any time – enforced
+ * inside the transaction that starts a session, so two tabs or a double tap
+ * cannot create two. Rejects with `SessionRuleError`, `ValidationError` or
+ * `StorageError`.
+ */
+export interface SessionRepository {
+  /** Emits the workout in progress, or `null` when there is none. */
+  observeActive(
+    listener: (session: SessionDetail | null) => void,
+    onError?: ErrorListener,
+  ): Unsubscribe;
+  getActive(): Promise<SessionDetail | null>;
+  /**
+   * Starts a workout from a plan day, copying ("snapshotting") its exercises,
+   * sets, rests and supersets. Later edits of the plan do not affect it.
+   */
+  startFromPlanDay(dayId: string, now?: Date): Promise<SessionDetail>;
+  /** Starts a workout without a plan and without exercises. */
+  startEmpty(name: string, now?: Date): Promise<SessionDetail>;
+  /** Marks the active session as abandoned. Its recorded sets are kept, but it is not part of history. */
+  abandon(sessionId: string, now?: Date): Promise<void>;
+}
+
 /** Grows with each phase as modules get their repositories. */
 export interface Repositories {
   readonly settings: SettingsRepository;
   readonly exercises: ExerciseRepository;
   readonly plans: PlanRepository;
+  readonly sessions: SessionRepository;
 }

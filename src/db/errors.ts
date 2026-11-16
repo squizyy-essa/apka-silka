@@ -130,3 +130,22 @@ export class PlanRuleError extends Error {
     this.violation = violation;
   }
 }
+
+export type SessionRuleViolation =
+  /** A workout is already in progress; it must be resumed, finished or abandoned first. */
+  | 'already-active'
+  | 'session-not-found'
+  | 'day-not-found'
+  /** The session is finished or abandoned and can no longer be changed this way. */
+  | 'not-active';
+
+/** A requested change to a workout session is not possible. Nothing was written. */
+export class SessionRuleError extends Error {
+  readonly violation: SessionRuleViolation;
+
+  constructor(violation: SessionRuleViolation) {
+    super(`Session rule violated: ${violation}`);
+    this.name = 'SessionRuleError';
+    this.violation = violation;
+  }
+}
