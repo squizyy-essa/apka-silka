@@ -4,16 +4,17 @@ Ten plik jest pamięcią projektu między sesjami pracy. **Na początku każdej 
 go w całości, potem `docs/ARCHITECTURE.md`, i dopiero wtedy zmieniaj kod.** Po każdej fazie
 zaktualizuj wszystkie sekcje.
 
-Ostatnia aktualizacja: 2026-11-16 (ukończone fazy 1–4; z fazy 8 przeniesiono instalację na ekranie początkowym i powiadomienie o aktualizacji).
+Ostatnia aktualizacja: 2026-11-17 (ukończone fazy 1–4; faza 5 w toku: silnik progresji gotowy, brak ekranów i zapisu sugestii; z fazy 8 przeniesiono instalację na ekranie początkowym i powiadomienie o aktualizacji).
 
 ## Jak wznowić pracę
 
-1. Wymagania są w specyfikacji „MASTER PROMPT: TRAINING PLANNER PWA” (trzyma ją właściciel
-   projektu – poproś o wklejenie, jeśli nie ma jej w rozmowie). Streszczenie decyzji i plan faz:
+1. Wymagania są w specyfikacji „MASTER PROMPT: TRAINING PLANNER PWA”. Wymagania faz 5–8
+   w brzmieniu specyfikacji: `docs/SPEC_REMAINING.md`. Streszczenie decyzji i plan faz:
    `docs/ARCHITECTURE.md`.
 2. `npm install`, potem `npm run check` i `npm run test:e2e` – wszystko musi być zielone, zanim
    zaczniesz cokolwiek zmieniać.
-3. Następna faza do zrobienia: **faza 5 – progresja** (lista zadań niżej).
+3. W toku: **faza 5 – progresja**. Silnik reguł jest gotowy i przetestowany; zostały ekrany,
+   zapis sugestii i testy e2e (lista zadań niżej).
 4. Zasady, których nie wolno łamać: żadnych makiet ani fikcyjnych danych; widoczna kontrolka =
    działająca funkcja; zapis do IndexedDB, nie do stanu komponentu; wydanej wersji schematu bazy
    się nie edytuje (nowa wersja + migracja); funkcja jest „ukończona” dopiero po testach.
@@ -288,6 +289,22 @@ Uzasadnienia w `docs/ARCHITECTURE.md` (§2 „Odstępstwa”).
 23. „Wykonana” bez wpisanego wyniku: ciężar z planu; powtórzenia tylko gdy plan to jedna liczba.
 24. Timer: stan w `restTimerState` (znaczniki czasu), wyświetlanie odświeżane co 250 ms.
 25. Pytanie o wznowienie pojawia się raz na uruchomienie aplikacji.
+26. Silnik progresji (`src/progression/`) to czyste funkcje bez bazy i Reacta; opisuje zmianę
+    (`changes`), nigdy jej nie stosuje. Stosuje ją dopiero ekran, po wyborze użytkownika.
+27. Warunek RIR jest spełniony, gdy wpisany RIR ≥ docelowego (seria nie była cięższa niż
+    planowano). Brak wpisanego RIR przy serii z celem RIR = „nie da się potwierdzić” → utrzymaj.
+28. Seria nieudana (status `failed`) zawsze oznacza „nie trafiono w cel”, nawet gdy jej
+    powtórzenia mieszczą się w zakresie. Powtórzenia poniżej dolnej granicy też.
+29. Przy różnych ciężarach serii (np. piramida) zwiększenie liczy się osobno dla każdej serii
+    od ciężaru faktycznie podniesionego (nie planowanego).
+30. „Rozważ zmniejszenie” dopiero po 2 treningach z rzędu bez celu przy tym samym ciężarze
+    (`MISSED_SESSIONS_BEFORE_DECREASE`); treningi z pominiętym ćwiczeniem są przeskakiwane.
+31. Ćwiczenia z masą ciała: brak wpisanego ciężaru = +0 kg obciążenia; sugestia „Zwiększ
+    trudność” (dodaj obciążenie albo podnieś cel), nigdy obniżka poniżej masy ciała.
+32. Seria rozgrzewkowa nieudana nie dostaje sugestii; ćwiczenia na czas i dystans – też nie.
+33. Zapisane sugestie trzymają liczby i treść wyjaśnienia z chwili pokazania
+    (`ProgressionSuggestion` w `src/shared/domain/progression.ts`), żeby historia była czytelna
+    po zmianie reguł.
 21. Adresy: `/plany/nowy`, `/plany/plan/:planId`, `/plany/plan/:planId/dzien/:dayId`.
 
 ## Znane problemy i ograniczenia
@@ -312,20 +329,57 @@ Uzasadnienia w `docs/ARCHITECTURE.md` (§2 „Odstępstwa”).
 
 ## Kolejne zadania
 
-### Faza 5 – Progresja (następna)
+### Faza 5 – Progresja (w toku)
 
-- [ ] Moduł `src/progression/` (czyste funkcje + testy): double progression (zakres powtórzeń,
-      docelowy RIR, tylko serie robocze; pominięte nie liczą się jako udane; brak RIR nie
-      potwierdza celu; bez docelowego RIR liczą się same powtórzenia).
-- [ ] Skok progresji z migawki ćwiczenia (`progressionIncrementKgSnapshot`, domyślnie 2,5 kg);
-      arytmetyka bez błędów zmiennoprzecinkowych.
-- [ ] Sugestie po nieudanej serii (maks. dwie: obniż ciężar o jeden skok / dostosuj powtórzenia),
-      z uzasadnieniem; „Zastosuj” zmienia tylko wybraną przyszłą serię; „Zignoruj”.
-- [ ] Sugestie między treningami po zakończeniu (zwiększ ciężar / powtórzenia / utrzymaj /
-      rozważ zmniejszenie po powtarzających się niepowodzeniach) w podsumowaniu; zastosowanie do
-      planu tylko za zgodą.
-- [ ] Zaprojektować zapis sugestii (schemat v4), żeby było widać, co zaproponowano i co wybrano.
-- [ ] Testy akceptacyjne C, D, E.
+Zrobione (2026-11-17, model Opus) – logika, bez ekranów:
+
+- [x] `src/progression/` – czyste funkcje + testy (68 testów; razem z testami schematu sugestii przybyło 77):
+  - `kg.ts` – arytmetyka w gramach (`addKg`, `subtractKg` nie poniżej 0, `sameKg`), domyślny
+    skok 2,5 kg (`effectiveIncrement`).
+  - `betweenSessions.ts` – `assessExerciseResult` (werdykt: `top_reached`, `in_range`, `missed`,
+    `incomplete`, `rir_missing`, `rir_below_target` albo `not_evaluated` z powodem) oraz
+    `recommendNextSession(current, previousNewestFirst)` → `increase_weight` (z `changes` per
+    seria: `fromKg`, `toKg`, `plannedSetId`), `increase_reps`, `hold` (z powodem),
+    `consider_decrease`, `not_evaluated`.
+  - `failedSet.ts` – `suggestAfterFailedSet({ failedSet, measurementType, incrementKg,
+    exerciseSets })` → do dwóch opcji (`lower_weight`, potem `adjust_reps`), każda z `changes`
+    dla serii docelowej; `targetSetId` = następna oczekująca seria robocza
+    (`nextPendingWorkingSet`), `cautious` gdy brak powtórzeń, `insufficient_data`,
+    `not_applicable`.
+  - `explain.ts` – polskie teksty: `describeRecommendation`, `describeFailedSetAdvice`,
+    `describeFailedSetOption`, `SUGGESTION_DISCLAIMER`.
+- [x] Testy akceptacyjne C, D, E na poziomie reguł (`betweenSessions.test.ts`,
+      `failedSet.test.ts`), w tym dokładne teksty wyjaśnień.
+- [x] Model zapisu sugestii: `progressionSuggestionSchema` w `src/shared/domain/progression.ts`
+      (+ testy walidacji).
+- [x] `plural` przeniesiony do `src/shared/lib/plural.ts` (planText go re-eksportuje).
+- [x] Wymagania faz 5–8 zapisane w `docs/SPEC_REMAINING.md`.
+
+Do zrobienia (ekrany i baza – wystarczy Sonnet):
+
+- [ ] Schemat bazy **v4**: tabela `progressionSuggestions` (indeksy: `id, sessionId,
+      sessionExerciseId, exerciseId, sourceSetId`), nowa wersja w `src/db/schema.ts` (nie
+      edytować v1–v3), test migracji jak w `database.test.ts`.
+- [ ] Repozytorium sugestii (interfejs w `types.ts` + Dexie): zapis pokazanej sugestii,
+      `applyFailedSetOption` (w jednej transakcji: zmiana tylko serii `targetSetId`, która nadal
+      ma status `pending` – inaczej błąd; zapis decyzji `applied`), `ignore`, odczyt na żywo.
+      Przy zastosowaniu opcji ciężaru wyczyścić też wpisany wcześniej `actualWeightKg` serii
+      docelowej tylko jeśli był równy staremu planowi – do decyzji przy implementacji.
+- [ ] Repozytorium sesji: wczytanie poprzednich zakończonych wyników ćwiczenia (najnowsze
+      najpierw) jako `ExerciseResult[]` dla `recommendNextSession` (wzór: `getPreviousResult`).
+- [ ] Trening: po oznaczeniu serii jako nieudanej pokazać kartę sugestii (tekst z
+      `describeFailedSetAdvice` + `SUGGESTION_DISCLAIMER`, przyciski opcji i „Zignoruj”).
+      Bez `targetSetId` – bez przycisków „Zastosuj”, tylko informacja.
+- [ ] Podsumowanie treningu: sekcja „Sugestie na następny trening” dla każdego ćwiczenia
+      (`describeRecommendation`); „Zastosuj w planie” tylko dla `increase_weight` /
+      `consider_decrease` z `plannedSetId`, po potwierdzeniu, gdy plan i serie nadal istnieją;
+      zmienia `targetWeightKg` serii planu (`planRepository.updateSet`).
+- [ ] Testy komponentowe i e2e scenariuszy C, D, E (przez UI) + sprawdzenie, że nic nie
+      zmienia się bez kliknięcia.
+- [ ] Aktualizacja `docs/ARCHITECTURE.md` (tabela przypadków brzegowych 13–15) i tego pliku.
+- [ ] Ustabilizować test `src/plans/plans.test.tsx` „sets another plan as primary, archives…”:
+      ok. 1 na 4 uruchomienia nie znajduje przycisku „Działania na planie” (wyścig z odświeżeniem
+      listy po zapisie). Niezwiązane z progresją; wykryte 2026-11-17.
 
 ### Później
 

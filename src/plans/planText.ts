@@ -1,5 +1,8 @@
 import type { MeasurementType, PlannedSet, ScheduleMode } from '@/shared/domain';
 import { formatNumber } from '@/shared/lib/numberInput';
+import { plural } from '@/shared/lib/plural';
+
+export { plural };
 
 /** Wording used by the plan screens. Pure functions, no React. */
 
@@ -22,19 +25,6 @@ export const SCHEDULE_MODE_LABELS: Readonly<Record<ScheduleMode, string>> = {
   fixed: 'Stałe dni tygodnia',
   flexible: 'Elastyczny (A, B, C…)',
 };
-
-/** Polish plural: 1 seria, 2–4 serie, 5+ serii (and 12–14 serii, 22 serie). */
-export function plural(count: number, one: string, few: string, many: string): string {
-  const lastTwo = count % 100;
-  const last = count % 10;
-  if (count === 1) {
-    return one;
-  }
-  if (last >= 2 && last <= 4 && !(lastTwo >= 12 && lastTwo <= 14)) {
-    return few;
-  }
-  return many;
-}
 
 export const countLabel = {
   days: (count: number) => `${count} ${plural(count, 'dzień', 'dni', 'dni')}`,
