@@ -1,6 +1,7 @@
 export { TrainingDatabase } from './database';
 export {
   ExerciseRuleError,
+  MeasurementRuleError,
   PlanRuleError,
   SessionRuleError,
   StorageError,

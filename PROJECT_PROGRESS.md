@@ -4,7 +4,7 @@ Ten plik jest pamięcią projektu między sesjami pracy. **Na początku każdej 
 go w całości, potem `docs/ARCHITECTURE.md`, i dopiero wtedy zmieniaj kod.** Po każdej fazie
 zaktualizuj wszystkie sekcje.
 
-Ostatnia aktualizacja: 2026-11-23 (ukończone fazy 1–5; z fazy 8 przeniesiono instalację na ekranie początkowym i powiadomienie o aktualizacji).
+Ostatnia aktualizacja: 2026-11-23 (ukończone fazy 1–6; z fazy 8 przeniesiono instalację na ekranie początkowym i powiadomienie o aktualizacji).
 
 ## Jak wznowić pracę
 
@@ -13,8 +13,8 @@ Ostatnia aktualizacja: 2026-11-23 (ukończone fazy 1–5; z fazy 8 przeniesiono 
    `docs/ARCHITECTURE.md`.
 2. `npm install`, potem `npm run check` i `npm run test:e2e` – wszystko musi być zielone, zanim
    zaczniesz cokolwiek zmieniać.
-3. Następna faza do zrobienia: **faza 6 – historia, analityka, kalendarz, pomiary** (lista
-   zadań niżej).
+3. Następna faza do zrobienia: **faza 7 – ustawienia, przypomnienia, eksport/import JSON**
+   (lista zadań niżej).
 4. Zasady, których nie wolno łamać: żadnych makiet ani fikcyjnych danych; widoczna kontrolka =
    działająca funkcja; zapis do IndexedDB, nie do stanu komponentu; wydanej wersji schematu bazy
    się nie edytuje (nowa wersja + migracja); funkcja jest „ukończona” dopiero po testach.
@@ -271,15 +271,42 @@ Ograniczenia fazy 5:
 - Skok progresji ćwiczenia ustawia się w kreatorze planu (pole już istniało); w sesji jest to
   migawka z chwili startu.
 
-## Wyniki testów (2026-11-23, koniec fazy 5)
+### Faza 6 – Historia, analityka, kalendarz, pomiary ✅ (2026-11-23)
+
+Zrobione (wszystko z zapisanych danych, żadnych fikcyjnych liczb):
+- **Historia** (`/historia`): lista zakończonych treningów (data, nazwa, czas, liczba ćwiczeń,
+  objętość robocza, rekordy), filtry (zakres dat, plan, ćwiczenie), szczegóły sesji.
+- **Edycja zakończonego treningu** z ostrzeżeniem; zmiana serii od razu zmienia rekordy,
+  statystyki i wykresy (test I). Edytować można tylko zakończone treningi.
+- **Statystyki** (`/historia/statystyki`): wykresy z zakresami czasu (Recharts, ładowany na żądanie),
+  każdy z tabelą danych „Pokaż dane jako tabelę”; rekordy osobiste (5 rodzajów, e1RM wg Epleya
+  1–10 powt. oznaczone jako szacunek).
+- **Podsumowanie treningu**: rekordy i porównanie z poprzednim treningiem tego samego dnia planu.
+- **Kalendarz** (`/historia/kalendarz`): miesiąc, dni z treningiem, dziś, wiele treningów dziennie.
+- **Pomiary ciała** (`/historia/pomiary`): dodawanie, edycja, usuwanie z potwierdzeniem, wykresy.
+- **Pulpit**: treningi w tygodniu, ostatni trening, rekordy, mini kalendarz, ostatni pomiar –
+  z pustymi stanami.
+- Kolejna seria podpowiada wynik poprzedniej (0.6.1), poświata po wykonaniu serii (0.6.2),
+  domyślny widok kart (0.6.3).
+
+Decyzje:
+- Rekordy i statystyki **nie są zapisywane**: są przeliczane z serii w kolejności chronologicznej,
+  dlatego edycja historii je poprawia.
+- Pierwszy wynik ćwiczenia to punkt odniesienia, nie rekord. Nieudane serie, rozgrzewki i
+  pominięte ćwiczenia nie liczą się. Objętości liczone w gramach (bez błędów float).
+- date-fns nie został użyty (wystarczył `Intl` i własna logika dat).
+- Baza v5: tylko migracja ustawienia widoku treningu na karty (bez nowych tabel); pomiary
+  korzystały z istniejącej tabeli.
+
+## Wyniki testów (2026-11-23, koniec fazy 6)
 
 | Sprawdzenie | Polecenie | Wynik |
 |---|---|---|
 | TypeScript strict | `npm run typecheck` | 0 błędów |
 | ESLint | `npm run lint` | 0 błędów, 0 ostrzeżeń |
-| Testy jednostkowe i komponentowe | `npm test` | 372 / 372 (25 plików) |
+| Testy jednostkowe i komponentowe | `npm test` | 447 / 447 (33 pliki) |
 | Build produkcyjny | `npm run build` | OK |
-| Testy e2e (Chrome, build produkcyjny) | `npm run test:e2e` | 51 / 51 |
+| Testy e2e (Chrome, build produkcyjny) | `npm run test:e2e` | 57 / 57 |
 | Build pod podścieżką (jak GitHub Pages) | ręcznie | działa, zapis ustawień OK, 0 błędów konsoli |
 | GitHub Actions – zadanie `check-and-build` | automatycznie po pushu | OK (typy, lint, testy, build na serwerach GitHuba) |
 | GitHub Actions – zadanie `deploy` | automatycznie po pushu | OK po włączeniu Pages; aplikacja: https://squizyy-essa.github.io/apka-silka/ |
@@ -351,8 +378,9 @@ Uzasadnienia w `docs/ARCHITECTURE.md` (§2 „Odstępstwa”).
 
 ## Znane problemy i ograniczenia
 
-- Paczka JS ma 710 kB (223 kB gzip) i Vite ostrzega o rozmiarze. Do zrobienia w fazie 8 (wcześniej,
-  jeśli zacznie przeszkadzać): ładowanie ekranów na żądanie.
+- Główna paczka JS ma ok. 972 kB (300 kB gzip) i Vite ostrzega o rozmiarze; Recharts jest
+  osobnym fragmentem ładowanym na żądanie. Podział pozostałych ekranów – faza 8.
+- Brak weryfikacji na prawdziwym iPhonie/Safari dla ekranów fazy 6 (testy w Chrome).
 - `npm audit`: 7 zgłoszeń „moderate”, wszystkie w narzędziach deweloperskich (minimatch
   w typescript-eslint); nie trafiają do aplikacji.
 - Test klawiatury w e2e przytrzymuje strzałkę (`down`/`up`), bo grupa radio Radix wybiera opcję
@@ -374,28 +402,18 @@ Uzasadnienia w `docs/ARCHITECTURE.md` (§2 „Odstępstwa”).
 
 ## Kolejne zadania
 
-### Faza 6 – Historia, analityka, kalendarz, pomiary (następna)
+### Faza 7 – Ustawienia i backup (następna)
 
-Wymagania: `docs/SPEC_REMAINING.md` §10–§14 (+ Pulpit §4.3). Biblioteki do dodania w tej fazie:
-Recharts, date-fns (ładować wykresy na żądanie, żeby nie rosła paczka).
+Wymagania: `docs/SPEC_REMAINING.md` (ustawienia, przypomnienia, eksport/import).
 
-- [ ] Historia: lista zakończonych treningów (data, nazwa, czas, liczba ćwiczeń, objętość
-      robocza, rekordy), filtry (zakres dat, plan, rodzaj, ćwiczenie), szczegóły sesji.
-- [ ] Edycja historycznej sesji z ostrzeżeniem; statystyki liczone z zapisanych danych, więc
-      aktualne po edycji (test I). Uwaga: sugestie progresji zapisane dla edytowanej sesji
-      (`progressionSuggestions`) zachowują treść z chwili pokazania.
-- [ ] Statystyki ogólne i ćwiczenia, wykresy z zakresami czasu, rekordy osobiste (5 rodzajów,
-      e1RM wg Epleya 1–10 powt., oznaczone jako szacunek), rekordy i porównanie z poprzednim
-      treningiem w podsumowaniu treningu.
-- [ ] Kalendarz miesięczny (dni z treningiem, zaplanowane, dzisiaj; wiele treningów dziennie).
-- [ ] Pomiary ciała (ekran, wykresy masy i obwodów, edycja i usuwanie).
-- [ ] Pulpit §4.3: treningi w tygodniu, ostatni trening, rekordy, progres, mini kalendarz,
-      ostatni pomiar – z pustymi stanami zamiast fikcyjnych liczb.
-- [ ] Test akceptacyjny I; aktualizacja `docs/ARCHITECTURE.md` (przypadki 17, 27, 28).
+- [ ] Ustawienia timera i przypomnień (tylko w otwartej aplikacji).
+- [ ] Eksport całej bazy do JSON (z wersją schematu).
+- [ ] Import z walidacją, migracją starszych wersji i odmową dla nowszych/uszkodzonych/z brakami
+      relacji (baza nietknięta przy błędzie); test akceptacyjny G; przypadki 21–24.
 
 ### Później
 
-Fazy 6–8 według tabeli w `docs/ARCHITECTURE.md` §6.
+Faza 8 według tabeli w `docs/ARCHITECTURE.md` §6.
 
 ## Do zrobienia przez właściciela projektu
 

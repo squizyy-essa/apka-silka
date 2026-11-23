@@ -1,6 +1,7 @@
 import type {
   AppSettings,
   AppSettingsPatch,
+  BodyMeasurement,
   Exercise,
   PlanDay,
   PlannedExercise,
@@ -45,35 +46,21 @@ export interface SettingsRepository {
   load(): Promise<AppSettings>;
   update(patch: AppSettingsPatch): Promise<AppSettings>;
   /** Notifies about every change, including changes made in another tab. */
-  subscribe(
-    listener: (settings: AppSettings) => void,
-    onError?: (error: StorageError) => void,
-  ): Unsubscribe;
+  subscribe(listener: (settings: AppSettings) => void, onError?: (error: StorageError) => void): Unsubscribe;
 }
 
 /** The user-editable part of an exercise. */
 export type ExerciseDraft = Pick<
   Exercise,
-  | 'name'
-  | 'description'
-  | 'category'
-  | 'primaryMuscle'
-  | 'secondaryMuscles'
-  | 'equipment'
-  | 'measurementType'
+  'name' | 'description' | 'category' | 'primaryMuscle' | 'secondaryMuscles' | 'equipment' | 'measurementType'
 >;
 
 export type ExerciseImageChange =
-  | { readonly kind: 'keep' }
-  | { readonly kind: 'remove' }
-  | { readonly kind: 'replace'; readonly blob: Blob };
+  { readonly kind: 'keep' } | { readonly kind: 'remove' } | { readonly kind: 'replace'; readonly blob: Blob };
 
 export interface ExerciseRepository {
   /** Whole library (built-in + custom), re-emitted after every change, also from another tab. */
-  observeAll(
-    listener: (exercises: Exercise[]) => void,
-    onError?: (error: StorageError) => void,
-  ): Unsubscribe;
+  observeAll(listener: (exercises: Exercise[]) => void, onError?: (error: StorageError) => void): Unsubscribe;
   list(): Promise<Exercise[]>;
   get(id: string): Promise<Exercise | undefined>;
   createCustom(draft: ExerciseDraft, image?: ExerciseImageChange): Promise<Exercise>;
@@ -113,9 +100,7 @@ export interface PlannedExercisePatch {
 }
 
 export type PlannedSetPatch = {
-  readonly [K in keyof Omit<PlannedSet, 'id' | 'plannedExerciseId' | 'order'>]?:
-    | PlannedSet[K]
-    | undefined;
+  readonly [K in keyof Omit<PlannedSet, 'id' | 'plannedExerciseId' | 'order'>]?: PlannedSet[K] | undefined;
 };
 
 export interface PlanOverview {
@@ -154,11 +139,7 @@ export interface PlanRepository {
     listener: (plan: PlanOverview | null) => void,
     onError?: ErrorListener,
   ): Unsubscribe;
-  observeDay(
-    dayId: string,
-    listener: (day: DayDetail | null) => void,
-    onError?: ErrorListener,
-  ): Unsubscribe;
+  observeDay(dayId: string, listener: (day: DayDetail | null) => void, onError?: ErrorListener): Unsubscribe;
   getDay(dayId: string): Promise<DayDetail | null>;
 
   /** The first non-archived plan automatically becomes the primary one. */
@@ -176,10 +157,7 @@ export interface PlanRepository {
    * Appends a day. Pass a function to derive the name from the number of
    * days that exist at the moment of saving.
    */
-  addDay(
-    planId: string,
-    name: string | ((existingDayCount: number) => string),
-  ): Promise<PlanDay>;
+  addDay(planId: string, name: string | ((existingDayCount: number) => string)): Promise<PlanDay>;
   updateDay(dayId: string, patch: DayPatch): Promise<PlanDay>;
   reorderDays(planId: string, orderedDayIds: readonly string[]): Promise<void>;
   /** The copy is placed right after the original. */
@@ -195,11 +173,7 @@ export interface PlanRepository {
   updateExercise(plannedExerciseId: string, patch: PlannedExercisePatch): Promise<PlannedExercise>;
   removeExercise(plannedExerciseId: string): Promise<void>;
   /** @param movedId the exercise the user moved; decides superset membership (see `normalizeSupersets`). */
-  reorderExercises(
-    dayId: string,
-    orderedIds: readonly string[],
-    movedId?: string,
-  ): Promise<void>;
+  reorderExercises(dayId: string, orderedIds: readonly string[], movedId?: string): Promise<void>;
 
   /** Puts the exercise and the one after it into one superset (creating or extending a group). */
   linkWithNextExercise(plannedExerciseId: string): Promise<void>;
@@ -235,10 +209,7 @@ export interface SessionDetail {
  */
 export interface SessionRepository {
   /** Emits the workout in progress, or `null` when there is none. */
-  observeActive(
-    listener: (session: SessionDetail | null) => void,
-    onError?: ErrorListener,
-  ): Unsubscribe;
+  observeActive(listener: (session: SessionDetail | null) => void, onError?: ErrorListener): Unsubscribe;
   getActive(): Promise<SessionDetail | null>;
   /**
    * Starts a workout from a plan day, copying ("snapshotting") its exercises,
@@ -251,6 +222,27 @@ export interface SessionRepository {
   abandon(sessionId: string, now?: Date): Promise<void>;
   /** Any session by id (e.g. for the summary of a finished workout). */
   get(sessionId: string): Promise<SessionDetail | null>;
+  /** All finished workouts with every set, newest first (live; also after a change in another tab). */
+  observeCompleted(listener: (sessions: SessionDetail[]) => void, onError?: ErrorListener): Unsubscribe;
+
+  // --- history: editing a finished workout. Statistics and records are never stored, so they
+  // --- follow the edit automatically. Rejects with `not-finished` for any other session.
+
+  /**
+   * Corrects what was recorded in a finished workout. `status` may switch a
+   * set between completed and failed (completing needs a weight/reps result,
+   * as in a workout in progress).
+   */
+  updateFinishedSet(setId: string, patch: FinishedSetPatch, now?: Date): Promise<SessionSet>;
+  /** Corrects the note and the well-being rating of a finished workout. */
+  updateFinishedSession(
+    sessionId: string,
+    patch: {
+      readonly notes?: string | undefined;
+      readonly wellbeingRating?: number | undefined;
+    },
+    now?: Date,
+  ): Promise<WorkoutSession>;
 
   // --- changes below apply to the active session only and never touch the plan ---
 
@@ -392,16 +384,39 @@ export interface SuggestionRepository {
   ignoreForPlan(input: PlanSuggestionInput, now?: Date): Promise<ProgressionSuggestion>;
 }
 
-export type SessionSetPatch = {
-  readonly [K in
-    | 'type'
-    | 'actualWeightKg'
-    | 'actualReps'
-    | 'actualRIR'
-    | 'durationSeconds'
-    | 'distanceMeters'
-    | 'notes']?: SessionSet[K] | undefined;
+export type FinishedSetPatch = SessionSetPatchBase & {
+  readonly status?: 'completed' | 'failed';
 };
+
+type SessionSetPatchBase = {
+  readonly [
+    K in 'actualWeightKg' | 'actualReps' | 'actualRIR' | 'durationSeconds' | 'distanceMeters' | 'notes'
+  ]?: SessionSet[K] | undefined;
+};
+
+export type SessionSetPatch = {
+  readonly [
+    K in
+      'type' | 'actualWeightKg' | 'actualReps' | 'actualRIR' | 'durationSeconds' | 'distanceMeters' | 'notes'
+  ]?: SessionSet[K] | undefined;
+};
+
+/** Values of one body measurement; every field is optional. */
+export type MeasurementDraft = Omit<BodyMeasurement, 'id'>;
+
+/**
+ * Body measurements (weight and circumferences). Rejects with
+ * `ValidationError` for impossible values (zero, negative, absurdly large)
+ * or `StorageError`.
+ */
+export interface MeasurementRepository {
+  /** All measurements, newest first (live; also after a change in another tab). */
+  observeAll(listener: (measurements: BodyMeasurement[]) => void, onError?: ErrorListener): Unsubscribe;
+  create(draft: MeasurementDraft): Promise<BodyMeasurement>;
+  /** Replaces the values of the entry: a field left out is cleared. */
+  update(id: string, draft: MeasurementDraft): Promise<BodyMeasurement>;
+  delete(id: string): Promise<void>;
+}
 
 /** Grows with each phase as modules get their repositories. */
 export interface Repositories {
@@ -410,4 +425,5 @@ export interface Repositories {
   readonly plans: PlanRepository;
   readonly sessions: SessionRepository;
   readonly suggestions: SuggestionRepository;
+  readonly measurements: MeasurementRepository;
 }

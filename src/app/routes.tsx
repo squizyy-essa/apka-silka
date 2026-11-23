@@ -1,5 +1,10 @@
 import type { RouteObject } from 'react-router';
 import { HistoryPage } from '@/analytics/HistoryPage';
+import { HistorySessionPage } from '@/analytics/HistorySessionPage';
+import { CalendarPage } from '@/analytics/CalendarPage';
+import { MeasurementsPage } from '@/analytics/MeasurementsPage';
+import { HISTORY_PATHS } from '@/analytics/paths';
+import { StatsPage } from '@/analytics/StatsPage';
 import { DashboardPage } from '@/dashboard/DashboardPage';
 import { ExerciseDetailPage } from '@/exercises/ExerciseDetailPage';
 import { ExerciseCreatePage, ExerciseEditPage } from '@/exercises/ExerciseFormPage';
@@ -71,6 +76,26 @@ export const routes: RouteObject[] = [
         path: ROUTE_PATHS.history,
         element: <HistoryPage />,
         handle: { title: 'Historia i statystyki' },
+      },
+      {
+        path: HISTORY_PATHS.stats,
+        element: <StatsPage />,
+        handle: { title: 'Statystyki' },
+      },
+      {
+        path: HISTORY_PATHS.calendar,
+        element: <CalendarPage />,
+        handle: { title: 'Kalendarz' },
+      },
+      {
+        path: HISTORY_PATHS.measurements,
+        element: <MeasurementsPage />,
+        handle: { title: 'Pomiary ciała' },
+      },
+      {
+        path: HISTORY_PATHS.session(':sessionId'),
+        element: <HistorySessionPage />,
+        handle: { title: 'Trening z historii' },
       },
       { path: ROUTE_PATHS.settings, element: <SettingsPage />, handle: { title: 'Ustawienia' } },
       { path: '*', element: <NotFoundPage />, handle: { title: 'Nie znaleziono strony' } },

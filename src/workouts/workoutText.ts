@@ -17,6 +17,7 @@ const RULE_MESSAGES: Readonly<Record<SessionRuleError['violation'], string>> = {
   'session-not-found': 'Ten trening już nie istnieje.',
   'day-not-found': 'Ten dzień treningowy już nie istnieje w planie.',
   'not-active': 'Ten trening został już zakończony lub porzucony.',
+  'not-finished': 'Edytować można tylko zakończone treningi.',
   'exercise-not-found': 'To ćwiczenie już nie istnieje.',
   'set-not-found': 'Ta seria już nie istnieje.',
   'missing-result': 'Uzupełnij wynik serii.',

@@ -463,3 +463,148 @@ test('the next set repeats the previous one: typing once, confirming twice', asy
   await expect(second.getByRole('textbox', { name: 'Powt.' })).toHaveValue('9');
   await expect(second.getByRole('textbox', { name: 'RIR' })).toHaveValue('1');
 });
+
+async function finishWorkout(page: Page) {
+  await page.getByRole('button', { name: 'Zakończ trening' }).click();
+  await page
+    .getByRole('dialog', { name: 'Zakończyć trening?' })
+    .getByRole('button', { name: 'Zakończ i zapisz' })
+    .click();
+  await expect(page.getByRole('region', { name: 'Podsumowanie treningu' })).toBeVisible();
+}
+
+/** Two finished Push workouts: bench 62,5 × 10 and then 65 × 10 (a new weight record). */
+async function twoPushWorkouts(page: Page) {
+  await createPushDay(page);
+  await startPush(page);
+  await finishSet(page, BENCH, 1, { kg: '62,5', reps: '10', rir: '2' });
+  await finishWorkout(page);
+  await expect(page.getByRole('region', { name: 'Rekordy osobiste' })).toContainText(
+    'nie pobito żadnego rekordu',
+  );
+
+  await startPush(page);
+  await finishSet(page, BENCH, 1, { kg: '65', reps: '10', rir: '2' });
+  await finishWorkout(page);
+}
+
+test('acceptance test I: records and charts follow an edit of a historical set', async ({ page }) => {
+  const problems = collectProblems(page);
+  await twoPushWorkouts(page);
+
+  // Summary of the second workout: the new record and the comparison.
+  const records = page.getByRole('region', { name: 'Rekordy osobiste' });
+  await expect(records).toContainText('Największy ciężar: 65 kg (poprzednio 62,5 kg)');
+  await expect(page.getByRole('region', { name: 'Porównanie z poprzednim treningiem' })).toContainText(
+    'Ten sam dzień planu',
+  );
+
+  // History lists both, the newer one first, with its record.
+  await page.getByRole('link', { name: 'Historia i statystyki', exact: true }).click();
+  const list = page.getByRole('list', { name: 'Zakończone treningi' });
+  await expect(list.getByRole('link')).toHaveCount(2);
+  await expect(list.getByRole('link').first()).toContainText('Rekordy: ');
+  await list.getByRole('link').first().click();
+
+  // Editing needs a deliberate confirmation …
+  await expect(page.getByRole('region', { name: 'Rekordy osobiste' })).toContainText('65 kg');
+  await page.getByRole('button', { name: 'Edytuj zapis' }).click();
+  await expect(page.getByRole('alertdialog', { name: 'Edytować zapis treningu?' })).toContainText(
+    'statystyki, wykresy i rekordy',
+  );
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Edytuj' }).click();
+
+  // … and a corrected weight removes the record at once.
+  const first = page.getByRole('listitem', { name: 'Seria 1', exact: true });
+  await enter(first.getByRole('textbox', { name: 'kg', exact: true }), '55');
+  await expect(page.getByRole('region', { name: 'Rekordy osobiste' })).toContainText(
+    'nie pobito żadnego rekordu',
+  );
+
+  // The statistics are built from the same data: the chart now peaks at 62,5 kg.
+  await page.getByRole('link', { name: 'Statystyki', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Najlepsze wyniki' })).toContainText('62,5 kg');
+  await expect(page.getByTestId('progress-chart').first()).toBeVisible();
+  await expect(page.getByTestId('progress-chart').first().locator('svg').first()).toBeVisible();
+  const weightChart = page.getByRole('region', { name: 'Największy ciężar w treningu' });
+  await weightChart.getByText('Pokaż dane jako tabelę').click();
+  const weightRows = weightChart.getByRole('row');
+  await expect(weightRows).toHaveCount(3); // header + 2 workouts
+  await expect(weightChart.getByRole('cell', { name: '55', exact: true })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Historia rekordów' })).toContainText('nie jest rekordem');
+
+  // The edit survives a reload.
+  await page.reload();
+  await expect(page.getByRole('region', { name: 'Najlepsze wyniki' })).toContainText('62,5 kg');
+
+  expect(problems).toEqual([]);
+});
+
+test('body measurements, calendar and dashboard use only what was saved', async ({ page }) => {
+  const problems = collectProblems(page);
+  await twoPushWorkouts(page);
+
+  // Dashboard: real numbers from the two workouts, no measurement yet.
+  await page.goto('./');
+  const week = page.getByRole('region', { name: 'Ten tydzień' });
+  await expect(week).toContainText('Ostatni trening: Push');
+  await expect(page.getByRole('region', { name: 'Ostatni pomiar' })).toContainText(
+    'Nie masz jeszcze zapisanych pomiarów ciała.',
+  );
+
+  await page
+    .getByRole('region', { name: 'Ostatni pomiar' })
+    .getByRole('link', { name: 'Dodaj pomiar' })
+    .click();
+  await page.getByLabel('Masa ciała (kg)').fill('82,4');
+  await page.getByLabel('Talia (cm)').fill('91');
+  await page.getByRole('button', { name: 'Zapisz pomiar' }).click();
+  await expect(page.getByRole('region', { name: 'Zapisane pomiary' })).toContainText('Masa ciała: 82,4 kg');
+  await expect(page.getByRole('region', { name: 'Masa ciała' })).toBeVisible();
+  await expect(page.getByTestId('progress-chart').first()).toBeVisible();
+
+  // The calendar marks today with the two workouts.
+  await page.getByRole('link', { name: 'Kalendarz', exact: true }).click();
+  await expect(page.getByRole('button', { name: /dziś, 2 treningi/ })).toBeVisible();
+  await page.getByRole('button', { name: /dziś, 2 treningi/ }).click();
+  await expect(page.getByRole('link', { name: /Push/ })).toHaveCount(2);
+
+  // Dashboard shows the measurement now.
+  await page.goto('./');
+  await expect(page.getByRole('region', { name: 'Ostatni pomiar' })).toContainText('82,4 kg');
+  await expect(page.getByRole('region', { name: 'Ostatnie rekordy' })).toContainText('Największy ciężar');
+
+  // Deleting asks first and leaves no trace.
+  await page.goto('./#/historia/pomiary');
+  await page.getByRole('button', { name: /^Usuń pomiar z dnia/ }).click();
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Usuń pomiar' }).click();
+  await expect(page.getByText('Brak pomiarów')).toBeVisible();
+
+  expect(problems).toEqual([]);
+});
+
+for (const width of [320, 375, 1024]) {
+  test(`history screens fit a ${width}px wide screen`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 800 });
+    const overflow = () =>
+      page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    await twoPushWorkouts(page);
+
+    for (const [path, ready] of [
+      ['./#/historia', 'Zakończone treningi'],
+      ['./#/historia/statystyki', 'Najlepsze wyniki'],
+      ['./#/historia/kalendarz', 'Kalendarz miesięczny'],
+      ['./#/historia/pomiary', 'Dodaj pomiar'],
+      ['./', 'Ten tydzień'],
+    ] as const) {
+      await page.goto(path);
+      await expect(
+        page
+          .getByRole(path === './#/historia' ? 'list' : 'region', { name: ready })
+          .or(page.getByRole('heading', { name: ready }))
+          .first(),
+      ).toBeVisible();
+      expect(await overflow(), path).toBeLessThanOrEqual(0);
+    }
+  });
+}

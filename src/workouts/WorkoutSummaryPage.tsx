@@ -12,6 +12,7 @@ import { buttonStyles } from '@/shared/ui/buttonStyles';
 import { Card, CardTitle } from '@/shared/ui/Card';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { EmptyState, ErrorAlert, LoadingState } from '@/shared/ui/states';
+import { SessionInsights } from '@/analytics/SessionInsights';
 import { NextSessionSuggestions } from './NextSessionSuggestions';
 import {
   describeResult,
@@ -100,8 +101,7 @@ function Summary({ detail }: { readonly detail: SessionDetail }) {
         </dl>
         <p className="mt-4 text-sm text-muted-foreground">
           Objętość robocza to suma ciężar × powtórzenia z wykonanych serii roboczych (bez rozgrzewek
-          i serii pominiętych). Rekordy osobiste i porównanie z poprzednim treningiem pojawią się
-          razem z historią i statystykami (faza 6).
+          i serii pominiętych).
         </p>
       </Card>
 
@@ -136,6 +136,8 @@ function Summary({ detail }: { readonly detail: SessionDetail }) {
           </ul>
         )}
       </Card>
+
+      <SessionInsights detail={detail} />
 
       <NextSessionSuggestions detail={detail} />
 

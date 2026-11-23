@@ -12,8 +12,7 @@ const nextDatabaseName = isolatedDatabaseNames();
 
 /** Renders the whole app against an isolated database, like a fresh browser tab. */
 function renderApp(databaseName: string, initialPath = '/') {
-  const createRuntime: CreateAppRuntime = (options) =>
-    createAppRuntime({ ...options, databaseName });
+  const createRuntime: CreateAppRuntime = (options) => createAppRuntime({ ...options, databaseName });
   const router = createMemoryRouter(routes, { initialEntries: [initialPath] });
   return render(<App router={router} createRuntime={createRuntime} />);
 }
@@ -48,9 +47,7 @@ describe('App', () => {
     expect(document.title).toBe('Plany · Training Planner');
 
     await user.click(sidebar().getByRole('link', { name: 'Historia i statystyki' }));
-    expect(
-      screen.getByRole('heading', { level: 1, name: 'Historia i statystyki' }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Historia i statystyki' })).toBeInTheDocument();
   });
 
   it('opens a section directly from its address', async () => {
@@ -59,13 +56,19 @@ describe('App', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Trening' })).toBeInTheDocument();
   });
 
-  it('marks unfinished modules as not implemented and shows no fake controls there', async () => {
+  it('opens history with its four sections and no placeholder', async () => {
     renderApp(nextDatabaseName(), '/historia');
 
     const main = within(await screen.findByRole('main'));
-    expect(await main.findByText('Ten moduł nie jest jeszcze wdrożony')).toBeInTheDocument();
-    expect(main.queryAllByRole('button')).toHaveLength(0);
-    expect(main.queryAllByRole('textbox')).toHaveLength(0);
+    const sections = within(await main.findByRole('navigation', { name: 'Sekcje historii' }));
+    expect(sections.getAllByRole('link').map((link) => link.textContent)).toEqual([
+      'Treningi',
+      'Statystyki',
+      'Kalendarz',
+      'Pomiary',
+    ]);
+    expect(await main.findByText('Brak zakończonych treningów')).toBeInTheDocument();
+    expect(main.queryByText('Ten moduł nie jest jeszcze wdrożony')).not.toBeInTheDocument();
   });
 
   it('shows a not-found screen with a way back for unknown addresses', async () => {

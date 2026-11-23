@@ -1,5 +1,6 @@
 import type { TrainingDatabase } from '../database';
 import { createDexieExerciseRepository } from './dexieExerciseRepository';
+import { createDexieMeasurementRepository } from './dexieMeasurementRepository';
 import { createDexiePlanRepository } from './dexiePlanRepository';
 import { createDexieSessionRepository } from './dexieSessionRepository';
 import { createDexieSettingsRepository } from './dexieSettingsRepository';
@@ -8,6 +9,7 @@ import type { Repositories } from './types';
 
 export { createDexieEntityRepository } from './dexieEntityRepository';
 export { createDexieExerciseRepository, syncSystemExercises } from './dexieExerciseRepository';
+export { createDexieMeasurementRepository } from './dexieMeasurementRepository';
 export { createDexiePlanRepository } from './dexiePlanRepository';
 export { createDexieSessionRepository } from './dexieSessionRepository';
 export { createDexieSettingsRepository, normalizeSettings } from './dexieSettingsRepository';
@@ -18,6 +20,9 @@ export type {
   EntityRepository,
   ExerciseDraft,
   ExerciseOccurrence,
+  FinishedSetPatch,
+  MeasurementDraft,
+  MeasurementRepository,
   FailedSetOptionKind,
   PlanSuggestionInput,
   PlanWeightChangeInput,
@@ -47,5 +52,6 @@ export function createRepositories(db: TrainingDatabase): Repositories {
     plans: createDexiePlanRepository(db),
     sessions: createDexieSessionRepository(db),
     suggestions: createDexieSuggestionRepository(db),
+    measurements: createDexieMeasurementRepository(db),
   };
 }

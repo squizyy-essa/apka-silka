@@ -3,9 +3,10 @@
 Aplikacja do planowania i zapisywania treningów siłowych. Działa w przeglądarce na telefonie
 i komputerze, bez konta i bez serwera – dane są zapisywane lokalnie na urządzeniu.
 
-> **Stan projektu:** ukończone fazy 1–4 z 8. Działa biblioteka ćwiczeń, kreator planów
-> i wykonywanie treningów (zapis serii, timer, wznawianie, podsumowanie). Progresja, historia
-> i statystyki są w budowie.
+> **Stan projektu:** ukończone fazy 1–6 z 8. Działa biblioteka ćwiczeń, kreator planów,
+> wykonywanie treningów, progresja, historia z edycją, statystyki i rekordy, kalendarz,
+> pomiary ciała i podsumowanie aktywności na Pulpicie. Kopia zapasowa (faza 7) i tryb offline
+> (faza 8) są w budowie.
 > Szczegóły: [`PROJECT_PROGRESS.md`](PROJECT_PROGRESS.md), plan: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ## Wymagania
@@ -76,8 +77,8 @@ Eksport i import kopii zapasowej (JSON) są zaplanowane na fazę 7 i **jeszcze n
 
 ## Znane ograniczenia
 
-- Część funkcji (historia, statystyki, pomiary) nie jest jeszcze wdrożona – ekrany mówią
-  o tym wprost.
+- Pierwszy zapisany wynik ćwiczenia jest punktem odniesienia, a nie rekordem. Rekord e1RM to
+  szacunek (wzór Epleya, 1–10 powtórzeń). Wykresy i rekordy powstają wyłącznie z zapisanych serii.
 - Sugestie progresji to proste, jawne reguły oparte na zapisanych wynikach, a nie model zmęczenia.
   Aplikacja niczego nie zmienia bez Twojej decyzji.
 - iOS: Safari i aplikacja dodana do ekranu początkowego mają osobne dane. Safari może usunąć dane

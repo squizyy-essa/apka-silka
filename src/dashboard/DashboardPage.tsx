@@ -1,6 +1,7 @@
 import { CalendarClock, ClipboardList, Dumbbell, Play } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
+import { ActivityCards } from './ActivityCards';
 import { ROUTE_PATHS } from '@/app/navigation';
 import { useRepositories } from '@/app/repositoriesContext';
 import type { PlanOverview, PlanRepository } from '@/db';
@@ -13,7 +14,6 @@ import { Button } from '@/shared/ui/Button';
 import { buttonStyles } from '@/shared/ui/buttonStyles';
 import { Card, CardDescription, CardTitle } from '@/shared/ui/Card';
 import { PageHeader } from '@/shared/ui/PageHeader';
-import { PlannedModuleNotice } from '@/shared/ui/PlannedModuleNotice';
 import { ErrorAlert } from '@/shared/ui/states';
 import { useActiveSession } from '@/workouts/useActiveSession';
 import { sessionErrorMessage } from '@/workouts/workoutText';
@@ -170,15 +170,7 @@ export function DashboardPage() {
           </>
         )}
 
-        <PlannedModuleNotice
-          phase={6}
-          title="Podsumowanie aktywności nie jest jeszcze wdrożone"
-          scope={[
-            'liczba treningów w tygodniu i ostatni trening',
-            'ostatnie rekordy osobiste i postęp',
-            'mini kalendarz i ostatni pomiar masy ciała',
-          ]}
-        />
+        <ActivityCards />
       </div>
     </>
   );

@@ -577,6 +577,66 @@ export function createDexieSessionRepository(db: TrainingDatabase): SessionRepos
       }
     },
 
+    observeCompleted(listener, onError) {
+      const subscription = liveQuery(async () => {
+        const sessions = await db.workoutSessions.where('status').equals('completed').toArray();
+        const details = await Promise.all(sessions.map(detailOf));
+        return details.sort((a, b) => b.session.startedAt.localeCompare(a.session.startedAt));
+      }).subscribe({
+        next: listener,
+        error: (error: unknown) => onError?.(toStorageError(error)),
+      });
+      return () => subscription.unsubscribe();
+    },
+
+    updateFinishedSet: (setId, patch, now = new Date()) =>
+      write(async () => {
+        const set = await db.sessionSets.get(setId);
+        if (set === undefined) {
+          throw new SessionRuleError('set-not-found');
+        }
+        const exercise = await db.sessionExercises.get(set.sessionExerciseId);
+        const session = exercise === undefined ? undefined : await db.workoutSessions.get(exercise.sessionId);
+        if (exercise === undefined || session === undefined) {
+          throw new SessionRuleError('session-not-found');
+        }
+        if (session.status !== 'completed') {
+          throw new SessionRuleError('not-finished');
+        }
+        const { status, ...values } = patch;
+        let next: Record<string, unknown> = { ...set, ...values };
+        if (status === 'completed') {
+          const result = resultForCompletion(next as SessionSet, exercise.measurementTypeSnapshot);
+          if (!result.ok) {
+            throw new SessionRuleError('missing-result', result.missing);
+          }
+          next = { ...next, ...result.values, status };
+        } else if (status === 'failed') {
+          next = { ...next, status };
+        }
+        const saved = await putSet(next);
+        await db.workoutSessions.update(session.id, { updatedAt: now.toISOString() });
+        return saved;
+      }),
+
+    updateFinishedSession: (sessionId, patch, now = new Date()) =>
+      write(async () => {
+        const session = await db.workoutSessions.get(sessionId);
+        if (session === undefined) {
+          throw new SessionRuleError('session-not-found');
+        }
+        if (session.status !== 'completed') {
+          throw new SessionRuleError('not-finished');
+        }
+        const next = valid(
+          workoutSessionSchema,
+          'WorkoutSession',
+          compact({ ...session, ...patch, updatedAt: now.toISOString() }),
+        );
+        await db.workoutSessions.put(next);
+        return next;
+      }),
+
     observeRestTimer(sessionId, listener, onError) {
       const subscription = liveQuery(() => db.restTimerState.get(sessionId)).subscribe({
         next: (timer) => listener(timer ?? null),

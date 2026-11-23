@@ -27,9 +27,7 @@ export class ValidationError extends Error {
   readonly issues: readonly z.core.$ZodIssue[];
 
   constructor(entityName: string, issues: readonly z.core.$ZodIssue[]) {
-    const details = issues
-      .map((issue) => `${issue.path.join('.') || '(root)'}: ${issue.message}`)
-      .join('; ');
+    const details = issues.map((issue) => `${issue.path.join('.') || '(root)'}: ${issue.message}`).join('; ');
     super(`Invalid ${entityName}: ${details}`);
     this.name = 'ValidationError';
     this.issues = issues;
@@ -108,6 +106,16 @@ export class ExerciseRuleError extends Error {
   }
 }
 
+/** The body measurement does not exist (any more), e.g. deleted in another tab. */
+export class MeasurementRuleError extends Error {
+  readonly violation = 'not-found' as const;
+
+  constructor() {
+    super('Measurement rule violated: not-found');
+    this.name = 'MeasurementRuleError';
+  }
+}
+
 export type PlanRuleViolation =
   | 'plan-not-found'
   | 'day-not-found'
@@ -140,6 +148,8 @@ export type SessionRuleViolation =
   | 'day-not-found'
   /** The session is finished or abandoned and can no longer be changed this way. */
   | 'not-active'
+  /** Only finished workouts can be edited as history. */
+  | 'not-finished'
   | 'exercise-not-found'
   | 'set-not-found'
   /** The set cannot be marked as done: a required result (see `missing`) was not entered. */
@@ -161,10 +171,7 @@ export class SessionRuleError extends Error {
   /** For `missing-result`: which value has to be entered. */
   readonly missing: 'weight' | 'reps' | 'duration' | 'distance' | undefined;
 
-  constructor(
-    violation: SessionRuleViolation,
-    missing?: 'weight' | 'reps' | 'duration' | 'distance',
-  ) {
+  constructor(violation: SessionRuleViolation, missing?: 'weight' | 'reps' | 'duration' | 'distance') {
     super(`Session rule violated: ${violation}${missing ? ` (${missing})` : ''}`);
     this.name = 'SessionRuleError';
     this.violation = violation;
