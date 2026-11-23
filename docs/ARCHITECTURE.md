@@ -157,7 +157,7 @@ i backendu teraz nie ma i nie ma też żadnych przycisków, które by je udawał
 | 5. Progresja ✅ | double progression, skoki ciężaru, sugestie po nieudanej serii (w treningu) i między treningami (w podsumowaniu), uzasadnienia, zapis decyzji (schemat v4) | reguły pokryte testami (C, D, E); nic nie zmienia się bez zgody |
 | 6. Historia i analityka ✅ | historia, szczegóły i edycja sesji, wykresy, rekordy, kalendarz, pomiary; **Pulpit: podsumowanie aktywności** | statystyki tylko z zapisanych danych, przeliczane po edycji (test I) |
 | 7. Ustawienia i backup ✅ | ustawienia timera, przypomnienia, eksport/import JSON | eksport + import odtwarza stan (test G) |
-| 8. PWA i dopracowanie | service worker, aktualizacje, dostępność, wydajność (podział kodu), testy mobilne. Manifest, ikony i tryb pełnoekranowy zrobione wcześniej (po fazie 1) | aplikacja instalowalna i poprawnie się aktualizuje |
+| 8. PWA i dopracowanie ✅ | service worker, aktualizacje, dostępność, wydajność (podział kodu), testy mobilne. Manifest, ikony i tryb pełnoekranowy zrobione wcześniej (po fazie 1) | aplikacja instalowalna i poprawnie się aktualizuje |
 
 Specyfikacja nie przypisuje Pulpitu (§4) do żadnej fazy – jest rozłożony na fazy 4 i 6, bo
 dopiero wtedy istnieją dane, które ma pokazywać.

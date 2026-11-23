@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createHashRouter } from 'react-router';
 import { App } from './app/App';
+import { registerServiceWorker } from './app/serviceWorker';
 import { routes } from './app/routes';
 import './app/styles/index.css';
 
@@ -19,3 +20,5 @@ createRoot(container).render(
     <App router={router} />
   </StrictMode>,
 );
+
+registerServiceWorker();

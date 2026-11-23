@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { activateNewServiceWorker } from '../serviceWorker';
 
 /**
  * Detects that a newer build of the app has been published.
@@ -55,7 +56,9 @@ export function isDifferentBuild(current: string, published: VersionInfo | null)
 export async function applyUpdate(
   fetchImpl: FetchLike,
   reload: () => void = () => window.location.reload(),
+  activateWorker: () => Promise<void> = activateNewServiceWorker,
 ): Promise<void> {
+  await activateWorker();
   try {
     await fetchImpl('./', { cache: 'reload' });
   } catch {

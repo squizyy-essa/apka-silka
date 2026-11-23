@@ -148,11 +148,12 @@ export function HistoryPage() {
                 ).length;
                 const recordCount = view.records.filter((event) => event.sessionId === session.id).length;
                 const duration = sessionDurationMs(detail);
+                const summary = `${duration > 0 ? `${formatDuration(duration)} · ` : ''}${performed} ćw. · objętość ${formatNumber(sessionVolumeKg(detail))} kg`;
+                const recordsLabel = recordCount > 0 ? `Rekordy: ${recordCount}` : '';
                 return (
                   <li key={session.id}>
                     <Link
                       to={HISTORY_PATHS.session(session.id)}
-                      aria-label={`${session.name}, ${formatLocalDate(session.localWorkoutDate)}`}
                       className="flex min-h-11 items-center gap-3 rounded-card border border-border bg-surface p-4 shadow-card"
                     >
                       <span className="min-w-0 flex-1">
@@ -161,17 +162,14 @@ export function HistoryPage() {
                           {recordCount > 0 && (
                             <Badge tone="accent">
                               <Trophy className="mr-1 size-3" aria-hidden="true" />
-                              Rekordy: {recordCount}
+                              {recordsLabel}
                             </Badge>
                           )}
                         </span>
                         <span className="block text-sm text-muted-foreground">
                           {formatLocalDate(session.localWorkoutDate)}
                         </span>
-                        <span className="mt-1 block text-sm text-foreground">
-                          {duration > 0 ? `${formatDuration(duration)} · ` : ''}
-                          {performed} ćw. · objętość {formatNumber(sessionVolumeKg(detail))} kg
-                        </span>
+                        <span className="mt-1 block text-sm text-foreground">{summary}</span>
                       </span>
                       <ChevronRight className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
                     </Link>

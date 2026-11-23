@@ -1,27 +1,22 @@
+import type { ComponentType } from 'react';
 import type { RouteObject } from 'react-router';
-import { HistoryPage } from '@/analytics/HistoryPage';
-import { HistorySessionPage } from '@/analytics/HistorySessionPage';
-import { CalendarPage } from '@/analytics/CalendarPage';
-import { MeasurementsPage } from '@/analytics/MeasurementsPage';
 import { HISTORY_PATHS } from '@/analytics/paths';
-import { StatsPage } from '@/analytics/StatsPage';
 import { DashboardPage } from '@/dashboard/DashboardPage';
-import { ExerciseDetailPage } from '@/exercises/ExerciseDetailPage';
-import { ExerciseCreatePage, ExerciseEditPage } from '@/exercises/ExerciseFormPage';
-import { ExerciseListPage } from '@/exercises/ExerciseListPage';
 import { EXERCISE_PATHS } from '@/exercises/paths';
-import { DayEditorPage } from '@/plans/DayEditorPage';
 import { PLAN_PATHS } from '@/plans/paths';
-import { PlanCreatePage } from '@/plans/PlanCreatePage';
-import { PlanEditorPage } from '@/plans/PlanEditorPage';
-import { PlansPage } from '@/plans/PlansPage';
-import { SettingsPage } from '@/settings/SettingsPage';
 import { WORKOUT_PATHS } from '@/workouts/paths';
-import { WorkoutPage } from '@/workouts/WorkoutPage';
-import { WorkoutSummaryPage } from '@/workouts/WorkoutSummaryPage';
 import { AppShell } from './AppShell';
 import { NotFoundPage, RouteErrorPage } from './errorPages';
+import { StartupFallback } from './StartupFallback';
 import { ROUTE_PATHS } from './navigation';
+
+/**
+ * Screens are loaded when first opened, so the first download stays small
+ * (the service worker stores every chunk, so they also open offline).
+ */
+function lazyPage<M extends Record<K, ComponentType>, K extends string>(load: () => Promise<M>, name: K) {
+  return async () => ({ Component: (await load())[name] });
+}
 
 /**
  * Route table, independent of the router type: production uses a hash
@@ -31,73 +26,90 @@ export const routes: RouteObject[] = [
   {
     path: '/',
     element: <AppShell />,
+    HydrateFallback: StartupFallback,
     errorElement: <RouteErrorPage />,
     children: [
       { index: true, element: <DashboardPage />, handle: { title: 'Pulpit' } },
-      { path: ROUTE_PATHS.plans, element: <PlansPage />, handle: { title: 'Plany' } },
-      { path: PLAN_PATHS.create, element: <PlanCreatePage />, handle: { title: 'Nowy plan' } },
+      {
+        path: ROUTE_PATHS.plans,
+        lazy: lazyPage(() => import('@/plans/PlansPage'), 'PlansPage'),
+        handle: { title: 'Plany' },
+      },
+      {
+        path: PLAN_PATHS.create,
+        lazy: lazyPage(() => import('@/plans/PlanCreatePage'), 'PlanCreatePage'),
+        handle: { title: 'Nowy plan' },
+      },
       {
         path: PLAN_PATHS.plan(':planId'),
-        element: <PlanEditorPage />,
+        lazy: lazyPage(() => import('@/plans/PlanEditorPage'), 'PlanEditorPage'),
         handle: { title: 'Plan treningowy' },
       },
       {
         path: PLAN_PATHS.day(':planId', ':dayId'),
-        element: <DayEditorPage />,
+        lazy: lazyPage(() => import('@/plans/DayEditorPage'), 'DayEditorPage'),
         handle: { title: 'Dzień treningowy' },
       },
       {
         path: EXERCISE_PATHS.list,
-        element: <ExerciseListPage />,
+        lazy: lazyPage(() => import('@/exercises/ExerciseListPage'), 'ExerciseListPage'),
         handle: { title: 'Biblioteka ćwiczeń' },
       },
       {
         path: EXERCISE_PATHS.create,
-        element: <ExerciseCreatePage />,
+        lazy: lazyPage(() => import('@/exercises/ExerciseFormPage'), 'ExerciseCreatePage'),
         handle: { title: 'Nowe ćwiczenie' },
       },
       {
         path: EXERCISE_PATHS.detail(':exerciseId'),
-        element: <ExerciseDetailPage />,
+        lazy: lazyPage(() => import('@/exercises/ExerciseDetailPage'), 'ExerciseDetailPage'),
         handle: { title: 'Ćwiczenie' },
       },
       {
         path: EXERCISE_PATHS.edit(':exerciseId'),
-        element: <ExerciseEditPage />,
+        lazy: lazyPage(() => import('@/exercises/ExerciseFormPage'), 'ExerciseEditPage'),
         handle: { title: 'Edycja ćwiczenia' },
       },
-      { path: ROUTE_PATHS.workout, element: <WorkoutPage />, handle: { title: 'Trening' } },
+      {
+        path: ROUTE_PATHS.workout,
+        lazy: lazyPage(() => import('@/workouts/WorkoutPage'), 'WorkoutPage'),
+        handle: { title: 'Trening' },
+      },
       {
         path: WORKOUT_PATHS.summary(':sessionId'),
-        element: <WorkoutSummaryPage />,
+        lazy: lazyPage(() => import('@/workouts/WorkoutSummaryPage'), 'WorkoutSummaryPage'),
         handle: { title: 'Podsumowanie treningu' },
       },
       {
         path: ROUTE_PATHS.history,
-        element: <HistoryPage />,
+        lazy: lazyPage(() => import('@/analytics/HistoryPage'), 'HistoryPage'),
         handle: { title: 'Historia i statystyki' },
       },
       {
         path: HISTORY_PATHS.stats,
-        element: <StatsPage />,
+        lazy: lazyPage(() => import('@/analytics/StatsPage'), 'StatsPage'),
         handle: { title: 'Statystyki' },
       },
       {
         path: HISTORY_PATHS.calendar,
-        element: <CalendarPage />,
+        lazy: lazyPage(() => import('@/analytics/CalendarPage'), 'CalendarPage'),
         handle: { title: 'Kalendarz' },
       },
       {
         path: HISTORY_PATHS.measurements,
-        element: <MeasurementsPage />,
+        lazy: lazyPage(() => import('@/analytics/MeasurementsPage'), 'MeasurementsPage'),
         handle: { title: 'Pomiary ciała' },
       },
       {
         path: HISTORY_PATHS.session(':sessionId'),
-        element: <HistorySessionPage />,
+        lazy: lazyPage(() => import('@/analytics/HistorySessionPage'), 'HistorySessionPage'),
         handle: { title: 'Trening z historii' },
       },
-      { path: ROUTE_PATHS.settings, element: <SettingsPage />, handle: { title: 'Ustawienia' } },
+      {
+        path: ROUTE_PATHS.settings,
+        lazy: lazyPage(() => import('@/settings/SettingsPage'), 'SettingsPage'),
+        handle: { title: 'Ustawienia' },
+      },
       { path: '*', element: <NotFoundPage />, handle: { title: 'Nie znaleziono strony' } },
     ],
   },

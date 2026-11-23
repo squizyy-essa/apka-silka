@@ -4,7 +4,7 @@ Ten plik jest pamięcią projektu między sesjami pracy. **Na początku każdej 
 go w całości, potem `docs/ARCHITECTURE.md`, i dopiero wtedy zmieniaj kod.** Po każdej fazie
 zaktualizuj wszystkie sekcje.
 
-Ostatnia aktualizacja: 2026-11-23 (ukończone fazy 1–7; z fazy 8 przeniesiono instalację na ekranie początkowym i powiadomienie o aktualizacji).
+Ostatnia aktualizacja: 2026-11-23 (ukończone fazy 1–8; z fazy 8 przeniesiono instalację na ekranie początkowym i powiadomienie o aktualizacji).
 
 ## Jak wznowić pracę
 
@@ -13,7 +13,7 @@ Ostatnia aktualizacja: 2026-11-23 (ukończone fazy 1–7; z fazy 8 przeniesiono 
    `docs/ARCHITECTURE.md`.
 2. `npm install`, potem `npm run check` i `npm run test:e2e` – wszystko musi być zielone, zanim
    zaczniesz cokolwiek zmieniać.
-3. Następna faza do zrobienia: **faza 8 – PWA i dopracowanie** (lista zadań niżej).
+3. Wszystkie 8 faz są ukończone. Dalej: uwagi z użytkowania na prawdziwym iPhonie (lista „Do zrobienia przez właściciela projektu”) i poprawki.
 4. Zasady, których nie wolno łamać: żadnych makiet ani fikcyjnych danych; widoczna kontrolka =
    działająca funkcja; zapis do IndexedDB, nie do stanu komponentu; wydanej wersji schematu bazy
    się nie edytuje (nowa wersja + migracja); funkcja jest „ukończona” dopiero po testach.
@@ -321,7 +321,39 @@ Decyzje:
   ćwiczenie – to dozwolone (ma własne migawki); plan i jego dni muszą mieć komplet powiązań.
 - Limity: plik do 100 MB, pojedyncza ilustracja do 5 MB.
 
-## Wyniki testów (2026-11-23, koniec fazy 7)
+### Faza 8 – PWA i dopracowanie ✅ (2026-11-23)
+
+Zrobione:
+- **Service worker** (`sw/worker.js`, plik `dist/sw.js` powstaje przy buildzie z listą wszystkich plików
+  danej wersji): zapisuje pliki aplikacji na urządzeniu; strony: najpierw sieć, w razie braku sieci
+  kopia; zasoby: najpierw kopia; `version.json` i `sw.js` zawsze z sieci. Nie dotyka IndexedDB.
+- **Aktualizacja**: nowy worker czeka; „Odśwież” (baner z fazy 1) prosi go o przejęcie, stare kopie
+  są kasowane, potem przeładowanie. W trakcie aktywnego treningu przycisk jest wyłączony z podpowiedzią
+  „odśwież po zakończeniu”. Zweryfikowane ręcznie na dwóch różnych buildach (baner → Odśwież →
+  nowa wersja, tylko nowa kopia, dane zachowane).
+- **Ustawienia → „Dane na tym urządzeniu”**: prawdziwy stan pracy bez internetu (gotowe / jeszcze się
+  zapisuje / niedostępne), zajęte miejsce, stan trwałego przechowywania i przycisk „Poproś o trwałe
+  przechowywanie” (tylko po kliknięciu).
+- **Podział kodu**: ekrany ładowane na żądanie (`lazy` w trasach), główna paczka z ok. 972 kB do ok.
+  396 kB (127 kB gzip), wspólna paczka ok. 304 kB, Recharts osobno; ostrzeżenie Vite zniknęło.
+  Pasek postępu podczas wczytywania ekranu i ekran startowy.
+- **Dostępność**: automatyczny skan axe (WCAG 2.1 A/AA) wszystkich głównych ekranów w motywie jasnym i
+  ciemnym – 0 naruszeń. Naprawione: nazwa linku w historii (zgodna z widocznym tekstem), wykres
+  ukryty przed czytnikami nie jest już fokusowalny, kontrast dni spoza miesiąca w kalendarzu.
+- Testy e2e offline: pliki w cache, otwarcie bez internetu z danymi, ekrany ładowane na żądanie
+  także offline.
+
+Decyzje:
+- Service worker napisany ręcznie (bez Workbox/vite-plugin-pwa): krótki, bez dodatkowych zależności,
+  zachowanie opisane w komentarzu pliku.
+- Cache porównuje odpowiedzi z `ignoreVary`, bo Chrome inaczej nie dopasowywał skryptów modułowych.
+- Worker nie robi `clients.claim()`, a build ma `modulePreload: false`: inaczej Chrome zgłaszał ostrzeżenia
+  „cross-world service worker resource mismatch” przy pierwszym załadowaniu. Strona, która zarejestrowała
+  workera, nie jest nim kontrolowana; następne otwarcie już tak.
+- Brak obietnicy pełnego offline: aplikacja nie ma serwera, więc dane są lokalne, ale nowe wersje i
+  pierwsze uruchomienie wymagają internetu.
+
+## Wyniki testów (2026-11-23, koniec fazy 8)
 
 | Sprawdzenie | Polecenie | Wynik |
 |---|---|---|
@@ -329,7 +361,7 @@ Decyzje:
 | ESLint | `npm run lint` | 0 błędów, 0 ostrzeżeń |
 | Testy jednostkowe i komponentowe | `npm test` | 476 / 476 (36 plików) |
 | Build produkcyjny | `npm run build` | OK |
-| Testy e2e (Chrome, build produkcyjny) | `npm run test:e2e` | 60 / 60 |
+| Testy e2e (Chrome, build produkcyjny) | `npm run test:e2e` | 64 / 64 (w tym offline i skan dostępności) |
 | Build pod podścieżką (jak GitHub Pages) | ręcznie | działa, zapis ustawień OK, 0 błędów konsoli |
 | GitHub Actions – zadanie `check-and-build` | automatycznie po pushu | OK (typy, lint, testy, build na serwerach GitHuba) |
 | GitHub Actions – zadanie `deploy` | automatycznie po pushu | OK po włączeniu Pages; aplikacja: https://squizyy-essa.github.io/apka-silka/ |
@@ -401,9 +433,9 @@ Uzasadnienia w `docs/ARCHITECTURE.md` (§2 „Odstępstwa”).
 
 ## Znane problemy i ograniczenia
 
-- Główna paczka JS ma ok. 972 kB (300 kB gzip) i Vite ostrzega o rozmiarze; Recharts jest
-  osobnym fragmentem ładowanym na żądanie. Podział pozostałych ekranów – faza 8.
-- Brak weryfikacji na prawdziwym iPhonie/Safari dla ekranów fazy 6 (testy w Chrome).
+- Brak weryfikacji na prawdziwym iPhonie/Safari (testy w Chrome): dotyczy ekranów faz 6–8, pobierania
+  pliku kopii, dźwięku, service workera i aktualizacji w aplikacji z ekranu początkowego.
+- Skan axe wykrywa tylko część problemów dostępności; nie zastępuje testu z VoiceOver.
 - `npm audit`: 7 zgłoszeń „moderate”, wszystkie w narzędziach deweloperskich (minimatch
   w typescript-eslint); nie trafiają do aplikacji.
 - Test klawiatury w e2e przytrzymuje strzałkę (`down`/`up`), bo grupa radio Radix wybiera opcję
@@ -425,19 +457,10 @@ Uzasadnienia w `docs/ARCHITECTURE.md` (§2 „Odstępstwa”).
 
 ## Kolejne zadania
 
-### Faza 8 – PWA i dopracowanie (następna)
+### Dalsze kroki
 
-Wymagania: `docs/SPEC_REMAINING.md` §16. Manifest, ikony, tryb pełnoekranowy i powiadomienie o
-aktualizacji są już zrobione.
-
-- [ ] Service worker z cache zasobów (bez obietnicy pełnego offline), aktualizacja bez utraty bazy i
-      bez przeładowania w trakcie aktywnego treningu.
-- [ ] Podział kodu (główna paczka ok. 1 MB), prośba o trwałe przechowywanie (`storage.persist`).
-- [ ] Dostępność i testy mobilne; ewentualnie podniesienie wersji akcji GitHub.
-
-### Później
-
-Szczegóły fazy 8 według tabeli w `docs/ARCHITECTURE.md` §6.
+Plan z 8 faz jest zrealizowany. Kolejne prace wynikają z używania aplikacji na iPhonie (błędy układu,
+brakujące drobne funkcje) i z ewentualnych nowych wymagań.
 
 ## Do zrobienia przez właściciela projektu
 

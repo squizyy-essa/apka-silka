@@ -35,6 +35,8 @@ export default function ProgressChart({ points, unit, kind, seriesName }: Progre
   const common = {
     data,
     margin: { top: 8, right: 8, bottom: 0, left: -8 },
+    // The chart is hidden from assistive technology (the table has the data), so it must not be focusable either.
+    accessibilityLayer: false,
   } as const;
   const axes = (
     <>

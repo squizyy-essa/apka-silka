@@ -3,10 +3,10 @@
 Aplikacja do planowania i zapisywania treningów siłowych. Działa w przeglądarce na telefonie
 i komputerze, bez konta i bez serwera – dane są zapisywane lokalnie na urządzeniu.
 
-> **Stan projektu:** ukończone fazy 1–7 z 8. Działa biblioteka ćwiczeń, kreator planów,
+> **Stan projektu:** ukończone wszystkie 8 faz. Działa biblioteka ćwiczeń, kreator planów,
 > wykonywanie treningów, progresja, historia z edycją, statystyki i rekordy, kalendarz,
 > pomiary ciała, podsumowanie aktywności na Pulpicie, ustawienia timera, przypomnienia
-> i kopia zapasowa JSON. Tryb offline i dopracowanie PWA (faza 8) są w budowie.
+> i kopia zapasowa JSON. Service worker pozwala otworzyć aplikację bez internetu po pierwszym załadowaniu.
 > Szczegóły: [`PROJECT_PROGRESS.md`](PROJECT_PROGRESS.md), plan: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ## Wymagania
@@ -59,8 +59,11 @@ Aplikacja uruchomiona z ikony ma na iPhonie **osobne dane** niż ta sama strona 
 Gdy zostanie opublikowana nowsza wersja, aplikacja pokaże pasek „Dostępna jest nowsza wersja”
 z przyciskiem „Odśwież” (sama się nie przeładowuje).
 
-Jeszcze niewdrożone (faza 8): service worker i działanie bez internetu.
-Do uruchomienia aplikacji potrzebne jest połączenie z internetem.
+Service worker zapisuje na urządzeniu pliki aplikacji, więc po pierwszym załadowaniu (z internetem)
+aplikacja powinna otwierać się także bez sieci; dane i tak są lokalne. Nie jest to gwarancja dla
+każdej przeglądarki, a nowe wersje pobierają się tylko z internetem. Nowa wersja nie podmienia się
+sama: pasek „Odśwież” podmienia ją na życzenie, a w trakcie treningu przycisk jest wyłączony do
+jego zakończenia. Aktualizacja nie dotyka bazy danych.
 
 ## Przechowywanie danych
 
@@ -94,5 +97,5 @@ Ustawienia → „Kopia zapasowa”:
 - Przypomnienia działają tylko, gdy aplikacja jest otwarta (brak serwera i powiadomień push);
   zamknięta aplikacja nic nie wyśle. Na iPhonie powiadomienia systemowe wymagają aplikacji
   z ekranu początkowego, a komunikat w aplikacji pokazuje się zawsze.
-- Brak trybu offline (faza 8); start aplikacji wymaga internetu.
+- Pierwsze uruchomienie wymaga internetu (pobranie plików aplikacji); potem aplikacja zwykle działa bez sieci.
 - Pełna lista ryzyk: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#7-ryzyka-i-ograniczenia-platformy).

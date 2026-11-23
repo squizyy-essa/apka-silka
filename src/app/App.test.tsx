@@ -43,11 +43,13 @@ describe('App', () => {
     await screen.findByRole('heading', { level: 1, name: 'Pulpit' });
 
     await user.click(sidebar().getByRole('link', { name: 'Plany' }));
-    expect(screen.getByRole('heading', { level: 1, name: 'Plany' })).toBeInTheDocument();
-    expect(document.title).toBe('Plany · Training Planner');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Plany' })).toBeInTheDocument();
+    await waitFor(() => expect(document.title).toBe('Plany · Training Planner'));
 
     await user.click(sidebar().getByRole('link', { name: 'Historia i statystyki' }));
-    expect(screen.getByRole('heading', { level: 1, name: 'Historia i statystyki' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Historia i statystyki' }),
+    ).toBeInTheDocument();
   });
 
   it('opens a section directly from its address', async () => {

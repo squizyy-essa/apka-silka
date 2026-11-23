@@ -1,8 +1,9 @@
 import { Dumbbell } from 'lucide-react';
 import { useEffect, useRef } from 'react';
-import { NavLink, Outlet, ScrollRestoration, useMatches } from 'react-router';
+import { NavLink, Outlet, ScrollRestoration, useMatches, useNavigation } from 'react-router';
 import { cn } from '@/shared/lib/cn';
 import { ActiveWorkoutNotices } from '@/workouts/ActiveWorkoutNotices';
+import { useActiveSession } from '@/workouts/useActiveSession';
 import { APP_NAME, NAV_ITEMS } from './navigation';
 import { ReminderHost } from './ReminderHost';
 import { UpdateBanner } from './update/UpdateBanner';
@@ -107,6 +108,8 @@ function BottomNav() {
  */
 export function AppShell() {
   useDocumentTitle();
+  const activeSession = useActiveSession();
+  const loadingScreen = useNavigation().state === 'loading';
   const mainRef = useRef<HTMLElement>(null);
 
   return (
@@ -126,8 +129,22 @@ export function AppShell() {
         tabIndex={-1}
         className="pt-[env(safe-area-inset-top)] pb-[calc(4.5rem+env(safe-area-inset-bottom))] outline-none lg:pb-0 lg:pl-60"
       >
-        <div className="mx-auto w-full max-w-5xl px-4 py-5 sm:px-6 lg:px-8 lg:py-8">
-          <UpdateBanner />
+        <div
+          className="mx-auto w-full max-w-5xl px-4 py-5 sm:px-6 lg:px-8 lg:py-8"
+          aria-busy={loadingScreen || undefined}
+        >
+          {loadingScreen && (
+            <div
+              role="progressbar"
+              aria-label="Wczytywanie ekranu"
+              className="fixed inset-x-0 top-0 z-50 h-1 overflow-hidden bg-primary-soft"
+            >
+              <div className="h-full w-1/3 animate-pulse bg-primary" />
+            </div>
+          )}
+          <UpdateBanner
+            workoutInProgress={activeSession.status === 'ready' && activeSession.value !== null}
+          />
           <ReminderHost />
           <ActiveWorkoutNotices />
           <Outlet />

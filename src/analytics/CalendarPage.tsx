@@ -131,7 +131,7 @@ export function CalendarPage() {
                           onClick={() => setSelected(day.date)}
                           className={cn(
                             'relative flex aspect-square min-h-11 w-full flex-col items-center justify-center rounded-control text-sm',
-                            day.inMonth ? 'text-foreground' : 'text-muted-foreground opacity-60',
+                            day.inMonth ? 'text-foreground' : 'text-muted-foreground',
                             day.completed > 0 && 'bg-primary-soft font-bold text-accent-text',
                             day.planned && 'border-2 border-dashed border-primary',
                             day.isToday && 'ring-2 ring-primary',

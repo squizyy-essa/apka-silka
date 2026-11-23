@@ -4,6 +4,7 @@ import { PageHeader } from '@/shared/ui/PageHeader';
 import { AppearanceSettings } from './AppearanceSettings';
 import { BackupSettings } from './BackupSettings';
 import { ReminderSettings } from './ReminderSettings';
+import { StorageSettings } from './StorageSettings';
 import { TimerSettings } from './TimerSettings';
 
 export function SettingsPage() {
@@ -17,6 +18,7 @@ export function SettingsPage() {
         <TimerSettings />
         <ReminderSettings />
         <BackupSettings />
+        <StorageSettings />
 
         <Card aria-labelledby="about-heading">
           <CardTitle id="about-heading">O aplikacji</CardTitle>

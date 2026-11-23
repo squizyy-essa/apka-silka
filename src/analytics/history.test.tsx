@@ -63,11 +63,10 @@ describe('history', () => {
 
     const list = within(await screen.findByRole('list', { name: 'Zakończone treningi' }));
     const items = list.getAllByRole('link');
-    expect(items.map((item) => item.getAttribute('aria-label'))).toEqual([
-      'Pull, 12 listopada 2026',
-      'Push, 9 listopada 2026',
-      'Push, 2 listopada 2026',
-    ]);
+    expect(items).toHaveLength(3);
+    expect(items[0]).toHaveTextContent(/^Pull.*12 listopada 2026/); // newest first
+    expect(items[1]).toHaveTextContent(/^Push.*9 listopada 2026/);
+    expect(items[2]).toHaveTextContent(/^Push.*2 listopada 2026/);
     expect(items[1]).toHaveTextContent('50 min');
     expect(items[1]).toHaveTextContent('objętość 1950 kg');
     expect(items[1]).toHaveTextContent('Rekordy:');
@@ -93,7 +92,7 @@ describe('history', () => {
     await user.type(screen.getByLabelText('Od dnia'), '2026-11-05');
     await user.type(screen.getByLabelText('Do dnia'), '2026-11-10');
     expect(screen.getByRole('status')).toHaveTextContent('Pasuje 1 z 3 treningów');
-    expect(screen.getByRole('link', { name: /^Push, 9 listopada/ })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /^Push.*9 listopada 2026/ })).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Wyczyść filtry' }));
     expect(screen.getByRole('status')).toHaveTextContent('Zakończone treningi: 3');
@@ -115,7 +114,7 @@ describe('history', () => {
     const databaseName = nextDatabaseName();
     await seedHistory(databaseName);
     renderApp(databaseName, '/historia');
-    await user.click(await screen.findByRole('link', { name: /^Push, 9 listopada/ }));
+    await user.click(await screen.findByRole('link', { name: /^Push.*9 listopada 2026/ }));
 
     const sets = within(
       await screen.findByRole('listitem', { name: 'Wyciskanie sztangi na ławce poziomej' }),
@@ -136,7 +135,7 @@ describe('history', () => {
     const databaseName = nextDatabaseName();
     await seedHistory(databaseName);
     renderApp(databaseName, '/historia');
-    await user.click(await screen.findByRole('link', { name: /^Push, 9 listopada/ }));
+    await user.click(await screen.findByRole('link', { name: /^Push.*9 listopada 2026/ }));
     await screen.findByRole('region', { name: 'Rekordy osobiste' });
     const recordsOf = () => within(screen.getByRole('region', { name: 'Rekordy osobiste' }));
     expect(await recordsOf().findByText(/Największy ciężar: 65 kg/)).toBeInTheDocument();
@@ -160,8 +159,8 @@ describe('history', () => {
     await user.click(screen.getByRole('button', { name: 'Zakończ edycję' }));
     await user.click(screen.getByRole('link', { name: /Wszystkie treningi/ }));
     const list = within(await screen.findByRole('list', { name: 'Zakończone treningi' }));
-    expect(list.getByRole('link', { name: /^Push, 9 listopada/ })).toHaveTextContent('objętość 1650 kg');
-    expect(list.getByRole('link', { name: /^Push, 9 listopada/ })).not.toHaveTextContent('Rekordy:');
+    expect(list.getByRole('link', { name: /^Push.*9 listopada 2026/ })).toHaveTextContent('objętość 1650 kg');
+    expect(list.getByRole('link', { name: /^Push.*9 listopada 2026/ })).not.toHaveTextContent('Rekordy:');
   });
 
   it('switches a set to failed and keeps the plan untouched', async () => {
@@ -169,7 +168,7 @@ describe('history', () => {
     const databaseName = nextDatabaseName();
     await seedHistory(databaseName);
     renderApp(databaseName, '/historia');
-    await user.click(await screen.findByRole('link', { name: /^Push, 9 listopada/ }));
+    await user.click(await screen.findByRole('link', { name: /^Push.*9 listopada 2026/ }));
     await user.click(await screen.findByRole('button', { name: 'Edytuj zapis' }));
     await user.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Edytuj' }));
 
