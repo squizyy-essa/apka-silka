@@ -1,38 +1,33 @@
-import { Flag, Plus, Trash2 } from "lucide-react";
-import { useCallback, useEffect, useId, useState } from "react";
-import { useNavigate } from "react-router";
-import { useRepositories } from "@/app/repositoriesContext";
-import type { SessionDetail } from "@/db";
-import { ExercisePickerDialog } from "@/exercises/ExercisePickerDialog";
-import { useSettings } from "@/settings/settingsContext";
-import type { WorkoutView } from "@/shared/domain";
-import { moveByOne } from "@/shared/lib/reorder";
-import { ignoreRejection, useSaveGuard } from "@/shared/lib/useSaveGuard";
-import { supersetLabels } from "@/shared/logic/supersets";
-import {
-  formatClock,
-  restAfterSet,
-  sessionTotals,
-  startRestTimer,
-} from "@/shared/logic/workout";
-import { ActionMenu } from "@/shared/ui/ActionMenu";
-import { Button } from "@/shared/ui/Button";
-import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
-import { PageHeader } from "@/shared/ui/PageHeader";
-import { SegmentedControl } from "@/shared/ui/SegmentedControl";
-import { ErrorAlert } from "@/shared/ui/states";
-import { CardsView } from "./CardsView";
-import { FinishDialog } from "./FinishDialog";
-import { WORKOUT_PATHS } from "./paths";
-import { RestTimerBar } from "./RestTimerBar";
-import { SessionExerciseCard } from "./SessionExerciseCard";
-import { unlockAudio } from "./sound";
-import { useSessionSuggestions } from "./useSessionSuggestions";
-import { sessionErrorMessage } from "./workoutText";
+import { Flag, Plus, Trash2 } from 'lucide-react';
+import { useCallback, useEffect, useId, useState } from 'react';
+import { useNavigate } from 'react-router';
+import { useRepositories } from '@/app/repositoriesContext';
+import type { SessionDetail } from '@/db';
+import { ExercisePickerDialog } from '@/exercises/ExercisePickerDialog';
+import { useSettings } from '@/settings/settingsContext';
+import type { WorkoutView } from '@/shared/domain';
+import { moveByOne } from '@/shared/lib/reorder';
+import { ignoreRejection, useSaveGuard } from '@/shared/lib/useSaveGuard';
+import { supersetLabels } from '@/shared/logic/supersets';
+import { formatClock, restAfterSet, sessionTotals, startRestTimer } from '@/shared/logic/workout';
+import { ActionMenu } from '@/shared/ui/ActionMenu';
+import { Button } from '@/shared/ui/Button';
+import { ConfirmDialog } from '@/shared/ui/ConfirmDialog';
+import { PageHeader } from '@/shared/ui/PageHeader';
+import { SegmentedControl } from '@/shared/ui/SegmentedControl';
+import { ErrorAlert } from '@/shared/ui/states';
+import { CardsView } from './CardsView';
+import { FinishDialog } from './FinishDialog';
+import { WORKOUT_PATHS } from './paths';
+import { RestTimerBar } from './RestTimerBar';
+import { SessionExerciseCard } from './SessionExerciseCard';
+import { unlockAudio } from './sound';
+import { useSessionSuggestions } from './useSessionSuggestions';
+import { sessionErrorMessage } from './workoutText';
 
 const VIEW_OPTIONS: readonly { value: WorkoutView; label: string }[] = [
-  { value: "table", label: "Tabela" },
-  { value: "cards", label: "Karty" },
+  { value: 'table', label: 'Tabela' },
+  { value: 'cards', label: 'Karty' },
 ];
 
 function ElapsedTime({ startedAt }: { readonly startedAt: string }) {
@@ -41,11 +36,7 @@ function ElapsedTime({ startedAt }: { readonly startedAt: string }) {
     const interval = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(interval);
   }, []);
-  return (
-    <span className="tabular-nums">
-      {formatClock(now - new Date(startedAt).getTime())}
-    </span>
-  );
+  return <span className="tabular-nums">{formatClock(now - new Date(startedAt).getTime())}</span>;
 }
 
 /** The workout in progress. Every change is stored at once; nothing here lives only in memory. */
@@ -56,8 +47,7 @@ export function ActiveWorkout({ detail }: { readonly detail: SessionDetail }) {
   const { error, run } = useSaveGuard(sessionErrorMessage);
   const { session, exercises } = detail;
   const observedDecisions = useSessionSuggestions(session.id);
-  const decisions =
-    observedDecisions.status === "ready" ? observedDecisions.value : null;
+  const decisions = observedDecisions.status === 'ready' ? observedDecisions.value : null;
   const viewLabelId = useId();
   const [picking, setPicking] = useState(false);
   const [finishing, setFinishing] = useState(false);
@@ -71,17 +61,14 @@ export function ActiveWorkout({ detail }: { readonly detail: SessionDetail }) {
   const totals = sessionTotals(exercises);
 
   const finishSet = useCallback(
-    (setId: string, status: "completed" | "failed") => {
+    (setId: string, status: 'completed' | 'failed') => {
       unlockAudio(); // we are inside a tap: allow the end-of-rest sound later
       ignoreRejection(
         run(sessions.setSetStatus(setId, status)).then(async () => {
           const fresh = await sessions.getActive();
-          const rest =
-            fresh === null ? null : restAfterSet(fresh.exercises, setId);
+          const rest = fresh === null ? null : restAfterSet(fresh.exercises, setId);
           if (fresh !== null && rest !== null) {
-            await sessions.saveRestTimer(
-              startRestTimer(fresh.session.id, rest, new Date()),
-            );
+            await sessions.saveRestTimer(startRestTimer(fresh.session.id, rest, new Date()));
           }
         }),
       );
@@ -95,8 +82,8 @@ export function ActiveWorkout({ detail }: { readonly detail: SessionDetail }) {
         title={session.name}
         description={
           <span>
-            Trening w toku · czas: <ElapsedTime startedAt={session.startedAt} />{" "}
-            · zrobione serie: {totals.setsDone} · zapis automatyczny
+            Trening w toku · czas: <ElapsedTime startedAt={session.startedAt} /> · zrobione serie:{' '}
+            {totals.setsDone} · zapis automatyczny
           </span>
         }
         action={
@@ -104,7 +91,7 @@ export function ActiveWorkout({ detail }: { readonly detail: SessionDetail }) {
             label="Działania na treningu"
             items={[
               {
-                label: "Porzuć trening",
+                label: 'Porzuć trening',
                 icon: Trash2,
                 destructive: true,
                 onSelect: () => setConfirmAbandon(true),
@@ -124,9 +111,7 @@ export function ActiveWorkout({ detail }: { readonly detail: SessionDetail }) {
             className="w-48"
             value={settings.workoutView}
             options={VIEW_OPTIONS}
-            onValueChange={(workoutView) =>
-              ignoreRejection(run(updateSettings({ workoutView })))
-            }
+            onValueChange={(workoutView) => ignoreRejection(run(updateSettings({ workoutView })))}
           />
         </div>
         <Button
@@ -146,7 +131,7 @@ export function ActiveWorkout({ detail }: { readonly detail: SessionDetail }) {
         </ErrorAlert>
       )}
 
-      {settings.workoutView === "cards" ? (
+      {settings.workoutView === 'cards' ? (
         <CardsView
           exercises={exercises}
           supersetLabels={labels}
@@ -180,9 +165,7 @@ export function ActiveWorkout({ detail }: { readonly detail: SessionDetail }) {
                 onMove={(direction) => {
                   const next = moveByOne(ids, item.exercise.id, direction);
                   if (next !== null) {
-                    ignoreRejection(
-                      run(sessions.reorderExercises(session.id, next)),
-                    );
+                    ignoreRejection(run(sessions.reorderExercises(session.id, next)));
                   }
                 }}
               />

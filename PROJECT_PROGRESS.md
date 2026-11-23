@@ -406,3 +406,6 @@ Fazy 6–8 według tabeli w `docs/ARCHITECTURE.md` §6.
 ## Poprawka 0.6.1 (2026-11-23)
 - Kolejna seria powtarza wynik poprzedniej wykonanej serii (kg, powt., RIR) jako widoczną podpowiedź w polach; wystarczy kliknąć „wykonana”. Wpisana wartość ma pierwszeństwo. Dotyczy ćwiczeń z ciężarem/masą ciała, tylko serii tego samego typu (rozgrzewka osobno). Czas i dystans nie są przenoszone.
 - Testy: 377 jednostkowych, 52 e2e.
+
+## Poprawka 0.6.2 (2026-11-23)
+- Widok kart: po wykonaniu serii zielona poświata wokół karty i zielone kółko z ptaszkiem (ok. 0,9 s). Pokazuje się dopiero, gdy seria faktycznie została zapisana jako wykonana (odrzucone zatwierdzenie go nie pokazuje). Przy włączonym „ogranicz ruch” w systemie animacja jest pomijana.

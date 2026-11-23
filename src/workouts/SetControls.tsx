@@ -1,10 +1,10 @@
-import { Check } from "lucide-react";
-import type { SessionRepository } from "@/db";
-import type { MeasurementType, SessionSet } from "@/shared/domain";
-import { cn } from "@/shared/lib/cn";
-import { formatNumber } from "@/shared/lib/numberInput";
-import type { RunSave } from "@/shared/lib/useSaveGuard";
-import { NumericField } from "@/shared/ui/autosaveFields";
+import { Check } from 'lucide-react';
+import type { SessionRepository } from '@/db';
+import type { MeasurementType, SessionSet } from '@/shared/domain';
+import { cn } from '@/shared/lib/cn';
+import { formatNumber } from '@/shared/lib/numberInput';
+import type { RunSave } from '@/shared/lib/useSaveGuard';
+import { NumericField } from '@/shared/ui/autosaveFields';
 
 const WEIGHT_RULES = { min: 0, max: 2000 } as const;
 const REPS_RULES = { integer: true, min: 0, max: 1000 } as const;
@@ -17,9 +17,7 @@ function repsHint(set: SessionSet): string | undefined {
   if (min === undefined && max === undefined) {
     return undefined;
   }
-  return min === undefined || max === undefined || min === max
-    ? String(max ?? min)
-    : `${min}–${max}`;
+  return min === undefined || max === undefined || min === max ? String(max ?? min) : `${min}–${max}`;
 }
 
 export interface SetFieldsProps {
@@ -36,63 +34,51 @@ export interface SetFieldsProps {
  * Inputs for what was really done in a set. The planned value is shown as a
  * grey hint inside an empty field; every field saves on its own.
  */
-export function SetFields({
-  set,
-  measurementType,
-  repository,
-  run,
-  previous,
-  className,
-}: SetFieldsProps) {
-  const update = (patch: Parameters<SessionRepository["updateSet"]>[1]) =>
+export function SetFields({ set, measurementType, repository, run, previous, className }: SetFieldsProps) {
+  const update = (patch: Parameters<SessionRepository['updateSet']>[1]) =>
     run(repository.updateSet(set.id, patch));
   const weight = (
     <NumericField
-      label={measurementType === "bodyweight_reps" ? "+ kg" : "kg"}
+      label={measurementType === 'bodyweight_reps' ? '+ kg' : 'kg'}
       value={set.actualWeightKg}
-      placeholder={
-        formatNumber(previous?.actualWeightKg ?? set.plannedWeightKg) || "–"
-      }
+      placeholder={formatNumber(previous?.actualWeightKg ?? set.plannedWeightKg) || '–'}
       rules={WEIGHT_RULES}
       onCommit={(actualWeightKg) => update({ actualWeightKg })}
     />
   );
 
   return (
-    <div className={cn("grid grid-cols-3 gap-2", className)}>
-      {measurementType === "duration" && (
+    <div className={cn('grid grid-cols-3 gap-2', className)}>
+      {measurementType === 'duration' && (
         <NumericField
           label="Czas (s)"
           className="col-span-2"
           value={set.durationSeconds}
-          placeholder={formatNumber(set.plannedDurationSeconds) || "–"}
+          placeholder={formatNumber(set.plannedDurationSeconds) || '–'}
           rules={SECONDS_RULES}
           onCommit={(durationSeconds) => update({ durationSeconds })}
         />
       )}
-      {measurementType === "distance" && (
+      {measurementType === 'distance' && (
         <>
           <NumericField
             label="Dystans (m)"
             value={set.distanceMeters}
-            placeholder={formatNumber(set.plannedDistanceMeters) || "–"}
+            placeholder={formatNumber(set.plannedDistanceMeters) || '–'}
             rules={METERS_RULES}
             onCommit={(distanceMeters) => update({ distanceMeters })}
           />
           {weight}
         </>
       )}
-      {(measurementType === "weight_reps" ||
-        measurementType === "bodyweight_reps") && (
+      {(measurementType === 'weight_reps' || measurementType === 'bodyweight_reps') && (
         <>
           {weight}
           <NumericField
             label="Powt."
             value={set.actualReps}
             placeholder={
-              previous?.actualReps === undefined
-                ? (repsHint(set) ?? "–")
-                : String(previous.actualReps)
+              previous?.actualReps === undefined ? (repsHint(set) ?? '–') : String(previous.actualReps)
             }
             rules={REPS_RULES}
             onCommit={(actualReps) => update({ actualReps })}
@@ -100,9 +86,7 @@ export function SetFields({
           <NumericField
             label="RIR"
             value={set.actualRIR}
-            placeholder={
-              formatNumber(previous?.actualRIR ?? set.plannedRIR) || "–"
-            }
+            placeholder={formatNumber(previous?.actualRIR ?? set.plannedRIR) || '–'}
             rules={RIR_RULES}
             onCommit={(actualRIR) => update({ actualRIR })}
           />
@@ -120,29 +104,20 @@ export interface DoneButtonProps {
 }
 
 /** Square "done" toggle of a set row. */
-export function DoneButton({
-  set,
-  number,
-  onComplete,
-  onUndo,
-}: DoneButtonProps) {
-  const done = set.status === "completed";
+export function DoneButton({ set, number, onComplete, onUndo }: DoneButtonProps) {
+  const done = set.status === 'completed';
   return (
     <button
       type="button"
       aria-pressed={done}
-      aria-label={
-        done
-          ? `Seria ${number} wykonana – cofnij`
-          : `Oznacz serię ${number} jako wykonaną`
-      }
-      title={done ? "Cofnij" : "Wykonana"}
+      aria-label={done ? `Seria ${number} wykonana – cofnij` : `Oznacz serię ${number} jako wykonaną`}
+      title={done ? 'Cofnij' : 'Wykonana'}
       onClick={done ? onUndo : onComplete}
       className={cn(
-        "inline-flex size-11 shrink-0 items-center justify-center rounded-control border transition-colors duration-150",
+        'inline-flex size-11 shrink-0 items-center justify-center rounded-control border transition-colors duration-150',
         done
-          ? "border-success bg-success text-surface"
-          : "border-border-strong bg-surface text-muted-foreground hover:bg-surface-muted hover:text-foreground",
+          ? 'border-success bg-success text-surface'
+          : 'border-border-strong bg-surface text-muted-foreground hover:bg-surface-muted hover:text-foreground',
       )}
     >
       <Check className="size-5" aria-hidden="true" />

@@ -1,7 +1,7 @@
-import { Lightbulb } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useRepositories } from "@/app/repositoriesContext";
-import { storageErrorMessage, toStorageError, type SessionDetail } from "@/db";
+import { Lightbulb } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useRepositories } from '@/app/repositoriesContext';
+import { storageErrorMessage, toStorageError, type SessionDetail } from '@/db';
 import {
   describeRecommendation,
   exerciseResultOf,
@@ -10,17 +10,17 @@ import {
   SUGGESTION_DISCLAIMER,
   type BetweenSessionsRecommendation,
   type ExerciseResult,
-} from "@/progression";
-import type { ProgressionSuggestion } from "@/shared/domain";
-import { formatNumber } from "@/shared/lib/numberInput";
-import { ignoreRejection, useSaveGuard } from "@/shared/lib/useSaveGuard";
-import { Badge } from "@/shared/ui/Badge";
-import { Button } from "@/shared/ui/Button";
-import { Card, CardTitle } from "@/shared/ui/Card";
-import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
-import { ErrorAlert } from "@/shared/ui/states";
-import { useSessionSuggestions } from "./useSessionSuggestions";
-import { sessionErrorMessage } from "./workoutText";
+} from '@/progression';
+import type { ProgressionSuggestion } from '@/shared/domain';
+import { formatNumber } from '@/shared/lib/numberInput';
+import { ignoreRejection, useSaveGuard } from '@/shared/lib/useSaveGuard';
+import { Badge } from '@/shared/ui/Badge';
+import { Button } from '@/shared/ui/Button';
+import { Card, CardTitle } from '@/shared/ui/Card';
+import { ConfirmDialog } from '@/shared/ui/ConfirmDialog';
+import { ErrorAlert } from '@/shared/ui/states';
+import { useSessionSuggestions } from './useSessionSuggestions';
+import { sessionErrorMessage } from './workoutText';
 
 /** How many earlier workouts are looked at to notice repeated misses. */
 const HISTORY_LENGTH = 5;
@@ -32,27 +32,23 @@ interface Entry {
 }
 
 type Loaded =
-  | { readonly status: "loading" }
-  | { readonly status: "ready"; readonly entries: readonly Entry[] }
-  | { readonly status: "error"; readonly message: string };
+  | { readonly status: 'loading' }
+  | { readonly status: 'ready'; readonly entries: readonly Entry[] }
+  | { readonly status: 'error'; readonly message: string };
 
 function useRecommendations(detail: SessionDetail): Loaded {
   const { sessions } = useRepositories();
-  const [state, setState] = useState<{ detail: SessionDetail; loaded: Loaded }>(
-    {
-      detail,
-      loaded: { status: "loading" },
-    },
-  );
+  const [state, setState] = useState<{ detail: SessionDetail; loaded: Loaded }>({
+    detail,
+    loaded: { status: 'loading' },
+  });
 
   useEffect(() => {
     let cancelled = false;
     const performed = detail.exercises.filter(
       ({ exercise, sets }) =>
         !exercise.isSkipped &&
-        sets.some(
-          (set) => set.status === "completed" || set.status === "failed",
-        ),
+        sets.some((set) => set.status === 'completed' || set.status === 'failed'),
     );
     Promise.all(
       performed.map(async ({ exercise, sets }): Promise<Entry> => {
@@ -67,24 +63,16 @@ function useRecommendations(detail: SessionDetail): Loaded {
         return {
           sessionExerciseId: exercise.id,
           name: exercise.exerciseNameSnapshot,
-          recommendation: recommendNextSession(
-            exerciseResultOf(exercise, sets),
-            previous,
-          ),
+          recommendation: recommendNextSession(exerciseResultOf(exercise, sets), previous),
         };
       }),
     ).then(
-      (entries) =>
-        !cancelled &&
-        setState({ detail, loaded: { status: "ready", entries } }),
+      (entries) => !cancelled && setState({ detail, loaded: { status: 'ready', entries } }),
       (error: unknown) =>
         !cancelled &&
         setState({
           detail,
-          loaded: {
-            status: "error",
-            message: storageErrorMessage(toStorageError(error).kind),
-          },
+          loaded: { status: 'error', message: storageErrorMessage(toStorageError(error).kind) },
         }),
     );
     return () => {
@@ -92,29 +80,16 @@ function useRecommendations(detail: SessionDetail): Loaded {
     };
   }, [sessions, detail]);
 
-  return state.detail === detail ? state.loaded : { status: "loading" };
+  return state.detail === detail ? state.loaded : { status: 'loading' };
 }
 
-function describeChanges(
-  changes: readonly { fromKg: number; toKg: number }[],
-): string {
-  const pairs = [
-    ...new Set(
-      changes.map(
-        (change) =>
-          `${formatNumber(change.fromKg)} → ${formatNumber(change.toKg)} kg`,
-      ),
-    ),
-  ];
-  return pairs.join(", ");
+function describeChanges(changes: readonly { fromKg: number; toKg: number }[]): string {
+  const pairs = [...new Set(changes.map((change) => `${formatNumber(change.fromKg)} → ${formatNumber(change.toKg)} kg`))];
+  return pairs.join(', ');
 }
 
-function DecisionBadge({
-  decision,
-}: {
-  readonly decision: ProgressionSuggestion;
-}) {
-  return decision.decision === "applied" ? (
+function DecisionBadge({ decision }: { readonly decision: ProgressionSuggestion }) {
+  return decision.decision === 'applied' ? (
     <Badge tone="accent">Zastosowano w planie</Badge>
   ) : (
     <Badge>Zignorowano</Badge>
@@ -126,11 +101,7 @@ function DecisionBadge({
  * exercise, with the reason. The plan changes only when the user presses
  * "Zastosuj w planie" and confirms; each decision is remembered.
  */
-export function NextSessionSuggestions({
-  detail,
-}: {
-  readonly detail: SessionDetail;
-}) {
+export function NextSessionSuggestions({ detail }: { readonly detail: SessionDetail }) {
   const { suggestions } = useRepositories();
   const loaded = useRecommendations(detail);
   const decisions = useSessionSuggestions(detail.session.id);
@@ -139,10 +110,10 @@ export function NextSessionSuggestions({
   const [busy, setBusy] = useState(false);
 
   const decisionFor = (entry: Entry) =>
-    decisions.status === "ready"
+    decisions.status === 'ready'
       ? decisions.value.find(
           (decision) =>
-            decision.source === "between_sessions" &&
+            decision.source === 'between_sessions' &&
             decision.sessionExerciseId === entry.sessionExerciseId,
         )
       : undefined;
@@ -151,8 +122,8 @@ export function NextSessionSuggestions({
     const proposal = planChangesOf(entry.recommendation);
     if (
       proposal === undefined ||
-      (entry.recommendation.kind !== "increase_weight" &&
-        entry.recommendation.kind !== "consider_decrease")
+      (entry.recommendation.kind !== 'increase_weight' &&
+        entry.recommendation.kind !== 'consider_decrease')
     ) {
       return undefined;
     }
@@ -176,10 +147,10 @@ export function NextSessionSuggestions({
         Sugestie na następny trening
       </CardTitle>
 
-      {loaded.status === "loading" && (
+      {loaded.status === 'loading' && (
         <p className="mt-2 text-sm text-muted-foreground">Analizuję wyniki…</p>
       )}
-      {loaded.status === "error" && (
+      {loaded.status === 'error' && (
         <ErrorAlert title="Nie udało się przygotować sugestii" className="mt-2">
           {loaded.message}
         </ErrorAlert>
@@ -190,7 +161,7 @@ export function NextSessionSuggestions({
         </ErrorAlert>
       )}
 
-      {loaded.status === "ready" &&
+      {loaded.status === 'ready' &&
         (loaded.entries.length === 0 ? (
           <p className="mt-2 text-sm text-muted-foreground">
             W tym treningu nie wykonano żadnej serii, więc nie ma czego oceniać.
@@ -207,51 +178,39 @@ export function NextSessionSuggestions({
                   aria-label={`Sugestia: ${entry.name}`}
                   className="rounded-control border border-border bg-background p-3"
                 >
-                  <h3 className="font-semibold text-foreground">
-                    {entry.name}
-                  </h3>
+                  <h3 className="font-semibold text-foreground">{entry.name}</h3>
                   <p className="mt-0.5 flex flex-wrap items-center gap-2 text-sm font-semibold text-foreground">
                     {text.title}
-                    {decision !== undefined && (
-                      <DecisionBadge decision={decision} />
-                    )}
+                    {decision !== undefined && <DecisionBadge decision={decision} />}
                   </p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {text.reason}
-                  </p>
-                  {actionable !== undefined &&
-                    decision === undefined &&
-                    decisions.status === "ready" && (
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        <Button
-                          variant="secondary"
-                          aria-label={`Zastosuj w planie: ${entry.name}`}
-                          onClick={() => setConfirming(entry)}
-                        >
-                          Zastosuj w planie
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          aria-label={`Zignoruj sugestię: ${entry.name}`}
-                          onClick={() =>
-                            ignoreRejection(
-                              run(suggestions.ignoreForPlan(actionable.input)),
-                            )
-                          }
-                        >
-                          Zignoruj
-                        </Button>
-                      </div>
-                    )}
+                  <p className="mt-1 text-sm text-muted-foreground">{text.reason}</p>
+                  {actionable !== undefined && decision === undefined && decisions.status === 'ready' && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <Button
+                        variant="secondary"
+                        aria-label={`Zastosuj w planie: ${entry.name}`}
+                        onClick={() => setConfirming(entry)}
+                      >
+                        Zastosuj w planie
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        aria-label={`Zignoruj sugestię: ${entry.name}`}
+                        onClick={() =>
+                          ignoreRejection(run(suggestions.ignoreForPlan(actionable.input)))
+                        }
+                      >
+                        Zignoruj
+                      </Button>
+                    </div>
+                  )}
                 </li>
               );
             })}
           </ul>
         ))}
 
-      <p className="mt-3 text-xs text-muted-foreground">
-        {SUGGESTION_DISCLAIMER}
-      </p>
+      <p className="mt-3 text-xs text-muted-foreground">{SUGGESTION_DISCLAIMER}</p>
 
       {confirming !== null && (
         <ConfirmDialog
@@ -260,10 +219,10 @@ export function NextSessionSuggestions({
           title="Zmienić plan?"
           description={
             <>
-              Ciężar w planie ćwiczenia „{confirming.name}” zmieni się dla{" "}
-              {inputFor(confirming)?.proposal.changes.length ?? 0} serii:{" "}
-              {describeChanges(inputFor(confirming)?.proposal.changes ?? [])}.
-              Ten i wcześniejsze treningi w historii pozostaną bez zmian.
+              Ciężar w planie ćwiczenia „{confirming.name}” zmieni się dla{' '}
+              {inputFor(confirming)?.proposal.changes.length ?? 0} serii:{' '}
+              {describeChanges(inputFor(confirming)?.proposal.changes ?? [])}. Ten i wcześniejsze
+              treningi w historii pozostaną bez zmian.
             </>
           }
           confirmLabel="Zmień plan"

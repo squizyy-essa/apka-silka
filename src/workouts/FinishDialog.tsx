@@ -1,13 +1,10 @@
-import * as Dialog from "@radix-ui/react-dialog";
-import { useId, useState } from "react";
-import { formatNumber } from "@/shared/lib/numberInput";
-import {
-  sessionTotals,
-  type SessionExerciseWithSets,
-} from "@/shared/logic/workout";
-import { Button } from "@/shared/ui/Button";
-import { ErrorAlert } from "@/shared/ui/states";
-import { WELLBEING_LABELS } from "./workoutText";
+import * as Dialog from '@radix-ui/react-dialog';
+import { useId, useState } from 'react';
+import { formatNumber } from '@/shared/lib/numberInput';
+import { sessionTotals, type SessionExerciseWithSets } from '@/shared/logic/workout';
+import { Button } from '@/shared/ui/Button';
+import { ErrorAlert } from '@/shared/ui/states';
+import { WELLBEING_LABELS } from './workoutText';
 
 export interface FinishDialogProps {
   readonly open: boolean;
@@ -15,31 +12,18 @@ export interface FinishDialogProps {
   readonly exercises: readonly SessionExerciseWithSets[];
   readonly busy: boolean;
   readonly error: string | null;
-  readonly onFinish: (result: {
-    wellbeingRating?: number;
-    notes?: string;
-  }) => void;
+  readonly onFinish: (result: { wellbeingRating?: number; notes?: string }) => void;
 }
 
 /** Last step of a workout: what will be saved, how it felt, an optional note. */
-export function FinishDialog({
-  open,
-  onOpenChange,
-  exercises,
-  busy,
-  error,
-  onFinish,
-}: FinishDialogProps) {
+export function FinishDialog({ open, onOpenChange, exercises, busy, error, onFinish }: FinishDialogProps) {
   const totals = sessionTotals(exercises);
   const [rating, setRating] = useState<number | null>(null);
-  const [notes, setNotes] = useState("");
+  const [notes, setNotes] = useState('');
   const notesId = useId();
 
   return (
-    <Dialog.Root
-      open={open}
-      onOpenChange={(next) => !busy && onOpenChange(next)}
-    >
+    <Dialog.Root open={open} onOpenChange={(next) => !busy && onOpenChange(next)}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-foreground/50" />
         <Dialog.Content
@@ -52,30 +36,20 @@ export function FinishDialog({
 
           <ul className="mt-3 space-y-1 text-sm text-foreground">
             <li>
-              Wykonane serie: {totals.setsDone} (ćwiczenia:{" "}
-              {totals.exercisesDone}).
+              Wykonane serie: {totals.setsDone} (ćwiczenia: {totals.exercisesDone}).
             </li>
-            <li>
-              Objętość robocza: {formatNumber(totals.workingVolumeKg)} kg.
-            </li>
+            <li>Objętość robocza: {formatNumber(totals.workingVolumeKg)} kg.</li>
             {totals.setsPending > 0 && (
               <li>
-                Niewykonane serie ({totals.setsPending}) zostaną zapisane jako
-                pominięte.
+                Niewykonane serie ({totals.setsPending}) zostaną zapisane jako pominięte.
               </li>
             )}
           </ul>
 
           {totals.setsDone === 0 && (
-            <p
-              role="alert"
-              className="mt-3 rounded-control border border-warning bg-background p-3 text-sm text-foreground"
-            >
-              <span className="font-semibold">
-                Żadna seria nie została wykonana.
-              </span>{" "}
-              Możesz mimo to zapisać pusty trening w historii albo wrócić i go
-              porzucić (menu treningu).
+            <p role="alert" className="mt-3 rounded-control border border-warning bg-background p-3 text-sm text-foreground">
+              <span className="font-semibold">Żadna seria nie została wykonana.</span> Możesz mimo to
+              zapisać pusty trening w historii albo wrócić i go porzucić (menu treningu).
             </p>
           )}
 
@@ -101,9 +75,7 @@ export function FinishDialog({
                       // A second tap on the chosen rating clears it again.
                       onClick={() => rating === value && setRating(null)}
                     />
-                    <span className="text-base font-bold text-foreground">
-                      {value}
-                    </span>
+                    <span className="text-base font-bold text-foreground">{value}</span>
                     <span className="text-[0.625rem] leading-tight text-muted-foreground">
                       {label}
                     </span>
@@ -113,10 +85,7 @@ export function FinishDialog({
             </div>
           </fieldset>
 
-          <label
-            htmlFor={notesId}
-            className="mt-5 mb-1.5 block text-sm font-semibold text-foreground"
-          >
+          <label htmlFor={notesId} className="mt-5 mb-1.5 block text-sm font-semibold text-foreground">
             Notatka do treningu (opcjonalnie)
           </label>
           <textarea
@@ -129,10 +98,7 @@ export function FinishDialog({
           />
 
           {error !== null && (
-            <ErrorAlert
-              title="Nie udało się zakończyć treningu"
-              className="mt-4"
-            >
+            <ErrorAlert title="Nie udało się zakończyć treningu" className="mt-4">
               {error}
             </ErrorAlert>
           )}
@@ -148,7 +114,7 @@ export function FinishDialog({
               onClick={() =>
                 onFinish({
                   ...(rating === null ? {} : { wellbeingRating: rating }),
-                  ...(notes.trim() === "" ? {} : { notes }),
+                  ...(notes.trim() === '' ? {} : { notes }),
                 })
               }
             >
