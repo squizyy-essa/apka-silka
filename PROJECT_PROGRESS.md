@@ -431,3 +431,8 @@ Faza 8 według tabeli w `docs/ARCHITECTURE.md` §6.
 ## Poprawka 0.6.3 (2026-11-23)
 - Trening otwiera się domyślnie w widoku kart. Baza v5: jednorazowo przełącza zapisane ustawienie na karty (potem Tabela/Karty działa jak dotąd i jest zapamiętywane).
 - Testy: 379 jednostkowych, 52 e2e.
+
+## Poprawka 0.7.1 (2026-11-23)
+- Historia: przycisk „Usuń trening” w szczegółach zakończonego treningu (z potwierdzeniem; usuwa sesję, ćwiczenia, serie i zapisane sugestie progresji; statystyki i rekordy przeliczają się bez niego). Dotyczy tylko zakończonych treningów.
+- Układ: pola daty w filtrach historii wystawały poza kartę na iPhonie (Safari ignoruje szerokość pola daty). Pola mogą się teraz zwężać (`min-w-0`, `appearance-none`). Testy w Chrome tego błędu nie odtwarzały, więc poprawka jest niesprawdzona na prawdziwym Safari.
+- Testy: 449 jednostkowych, 58 e2e.

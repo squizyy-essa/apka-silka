@@ -151,4 +151,28 @@ describe('history of finished workouts', () => {
     });
     db.close();
   });
+
+  it('deletes a finished workout with everything that belongs to it, and nothing else', async () => {
+    const { db, sessions, dayId } = await setup();
+    const keep = await finishedWorkout(sessions, dayId, 2, 60, 10);
+    const gone = await finishedWorkout(sessions, dayId, 9, 62.5, 10);
+
+    await sessions.deleteFinishedSession(gone.session.id);
+
+    expect(await db.workoutSessions.get(gone.session.id)).toBeUndefined();
+    expect(await db.sessionExercises.where('sessionId').equals(gone.session.id).count()).toBe(0);
+    const goneSetIds = new Set(gone.exercises.flatMap(({ sets }) => sets.map((set) => set.id)));
+    expect((await db.sessionSets.toArray()).filter((set) => goneSetIds.has(set.id))).toEqual([]);
+    expect(await db.workoutSessions.get(keep.session.id)).toBeDefined();
+    expect(await db.sessionSets.count()).toBeGreaterThan(0);
+    await sessions.deleteFinishedSession(gone.session.id); // idempotent
+  });
+
+  it('refuses to delete a workout that is still active', async () => {
+    const { sessions, dayId } = await setup();
+    const active = await sessions.startFromPlanDay(dayId, at(16));
+    await expect(sessions.deleteFinishedSession(active.session.id)).rejects.toMatchObject({
+      violation: 'not-finished',
+    });
+  });
 });

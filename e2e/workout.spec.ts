@@ -608,3 +608,26 @@ for (const width of [320, 375, 1024]) {
     }
   });
 }
+
+test('a finished workout can be deleted from history, after confirmation', async ({ page }) => {
+  const problems = collectProblems(page);
+  await twoPushWorkouts(page);
+  await page.getByRole('link', { name: 'Historia i statystyki', exact: true }).click();
+  const list = page.getByRole('list', { name: 'Zakończone treningi' });
+  await expect(list.getByRole('link')).toHaveCount(2);
+  await list.getByRole('link').first().click();
+
+  await page.getByRole('button', { name: 'Usuń trening' }).click();
+  const dialog = page.getByRole('alertdialog', { name: 'Usunąć ten trening?' });
+  await dialog.getByRole('button', { name: 'Anuluj' }).click();
+  await expect(page.getByRole('heading', { name: 'Push' })).toBeVisible(); // nothing happened
+
+  await page.getByRole('button', { name: 'Usuń trening' }).click();
+  await dialog.getByRole('button', { name: 'Usuń trening' }).click();
+  await expect(list.getByRole('link')).toHaveCount(1);
+
+  // The record that belonged to the deleted workout is gone from the statistics.
+  await page.getByRole('link', { name: 'Statystyki', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Najlepsze wyniki' })).toContainText('62,5 kg');
+  expect(problems).toEqual([]);
+});

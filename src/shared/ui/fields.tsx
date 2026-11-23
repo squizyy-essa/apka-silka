@@ -25,7 +25,7 @@ interface FieldShellProps {
 
 function FieldShell({ id, label, hint, error, className, children }: FieldShellProps) {
   return (
-    <div className={className}>
+    <div className={cn('min-w-0', className)}>
       <label htmlFor={id} className="mb-1.5 block text-sm font-semibold text-foreground">
         {label}
       </label>
@@ -68,7 +68,7 @@ export function TextField({ label, hint, error, className, ...input }: TextField
     <FieldShell id={id} label={label} hint={hint} error={error} className={className}>
       <input
         id={id}
-        className={cn(controlClass, 'min-h-11')}
+        className={cn(controlClass, 'min-h-11 min-w-0 max-w-full appearance-none text-left')}
         aria-invalid={error !== undefined || undefined}
         aria-describedby={describedBy(id, hint, error)}
         {...input}

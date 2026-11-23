@@ -99,7 +99,7 @@ export function createDexieSessionRepository(db: TrainingDatabase): SessionRepos
 
   const write = async <R>(work: () => Promise<R>): Promise<R> => {
     try {
-      return await db.transaction('rw', [...sessionTables, db.exercises], work);
+      return await db.transaction('rw', [...sessionTables, db.exercises, db.progressionSuggestions], work);
     } catch (error) {
       rethrow(error);
     }
@@ -617,6 +617,23 @@ export function createDexieSessionRepository(db: TrainingDatabase): SessionRepos
         const saved = await putSet(next);
         await db.workoutSessions.update(session.id, { updatedAt: now.toISOString() });
         return saved;
+      }),
+
+    deleteFinishedSession: (sessionId) =>
+      write(async () => {
+        const session = await db.workoutSessions.get(sessionId);
+        if (session === undefined) {
+          return;
+        }
+        if (session.status !== 'completed') {
+          throw new SessionRuleError('not-finished');
+        }
+        const exerciseIds = await db.sessionExercises.where('sessionId').equals(sessionId).primaryKeys();
+        await db.sessionSets.where('sessionExerciseId').anyOf(exerciseIds).delete();
+        await db.sessionExercises.where('sessionId').equals(sessionId).delete();
+        await db.progressionSuggestions.where('sessionId').equals(sessionId).delete();
+        await db.restTimerState.delete(sessionId);
+        await db.workoutSessions.delete(sessionId);
       }),
 
     updateFinishedSession: (sessionId, patch, now = new Date()) =>

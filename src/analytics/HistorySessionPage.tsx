@@ -1,6 +1,6 @@
-import { Compass, Pencil } from 'lucide-react';
+import { Compass, Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { Link, useParams } from 'react-router';
+import { Link, useNavigate, useParams } from 'react-router';
 import { useRepositories } from '@/app/repositoriesContext';
 import type { SessionDetail } from '@/db';
 import type { MeasurementType, SessionSet } from '@/shared/domain';
@@ -146,6 +146,9 @@ function SessionView({ detail }: { readonly detail: SessionDetail }) {
   const { error, run } = useSaveGuard(sessionErrorMessage);
   const [editing, setEditing] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const navigate = useNavigate();
   const { session, exercises } = detail;
   const totals = sessionTotals(exercises);
   const duration = sessionDurationMs(detail);
@@ -313,6 +316,35 @@ function SessionView({ detail }: { readonly detail: SessionDetail }) {
       {session.status === 'completed' && (
         <Badge className="mt-3">Edycja nie zmienia planu treningowego.</Badge>
       )}
+
+      {!editing && (
+        <Button variant="secondary" className="mt-4 w-full text-danger" onClick={() => setDeleting(true)}>
+          <Trash2 className="size-4" aria-hidden="true" />
+          Usuń trening
+        </Button>
+      )}
+
+      <ConfirmDialog
+        open={deleting}
+        onOpenChange={setDeleting}
+        title="Usunąć ten trening?"
+        description="Trening zostanie trwale usunięty razem ze wszystkimi seriami. Statystyki, wykresy i rekordy przeliczą się bez niego. Tej operacji nie można cofnąć."
+        confirmLabel="Usuń trening"
+        destructive
+        busy={deleteBusy}
+        onConfirm={() => {
+          setDeleteBusy(true);
+          run(sessions.deleteFinishedSession(session.id)).then(
+            () => {
+              void navigate(HISTORY_PATHS.list);
+            },
+            () => {
+              setDeleteBusy(false);
+              setDeleting(false);
+            },
+          );
+        }}
+      />
 
       <ConfirmDialog
         open={confirming}

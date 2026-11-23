@@ -235,6 +235,12 @@ export interface SessionRepository {
    */
   updateFinishedSet(setId: string, patch: FinishedSetPatch, now?: Date): Promise<SessionSet>;
   /** Corrects the note and the well-being rating of a finished workout. */
+  /**
+   * Permanently removes a *completed* workout with all its exercises, sets
+   * and progression suggestions. Statistics are recomputed from what is
+   * left. Idempotent; refuses (`not-finished`) a workout that is not completed.
+   */
+  deleteFinishedSession(sessionId: string): Promise<void>;
   updateFinishedSession(
     sessionId: string,
     patch: {
