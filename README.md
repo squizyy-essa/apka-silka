@@ -3,10 +3,10 @@
 Aplikacja do planowania i zapisywania treningów siłowych. Działa w przeglądarce na telefonie
 i komputerze, bez konta i bez serwera – dane są zapisywane lokalnie na urządzeniu.
 
-> **Stan projektu:** ukończone fazy 1–6 z 8. Działa biblioteka ćwiczeń, kreator planów,
+> **Stan projektu:** ukończone fazy 1–7 z 8. Działa biblioteka ćwiczeń, kreator planów,
 > wykonywanie treningów, progresja, historia z edycją, statystyki i rekordy, kalendarz,
-> pomiary ciała i podsumowanie aktywności na Pulpicie. Kopia zapasowa (faza 7) i tryb offline
-> (faza 8) są w budowie.
+> pomiary ciała, podsumowanie aktywności na Pulpicie, ustawienia timera, przypomnienia
+> i kopia zapasowa JSON. Tryb offline i dopracowanie PWA (faza 8) są w budowie.
 > Szczegóły: [`PROJECT_PROGRESS.md`](PROJECT_PROGRESS.md), plan: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ## Wymagania
@@ -73,7 +73,15 @@ Do uruchomienia aplikacji potrzebne jest połączenie z internetem.
 
 ## Backup
 
-Eksport i import kopii zapasowej (JSON) są zaplanowane na fazę 7 i **jeszcze nie są wdrożone**.
+Ustawienia → „Kopia zapasowa”:
+
+- **Eksportuj dane** zapisuje plik `training-backup-RRRR-MM-DD.json` (plany, treningi, wyniki, pomiary,
+  własne ćwiczenia z ilustracjami, ustawienia; numer wersji schematu, data i wersja aplikacji).
+- **Importuj dane z pliku** sprawdza plik (JSON, wersja, struktura, powiązania), pokazuje
+  podsumowanie i dopiero po potwierdzeniu **zastępuje wszystkie dane**. Jest to operacja
+  „wszystko albo nic”; błędny plik niczego nie zmienia. Przed zastąpieniem można pobrać kopię
+  obecnych danych.
+- Kopię warto robić regularnie: to jedyna kopia danych, które są tylko w tej przeglądarce.
 
 ## Znane ograniczenia
 
@@ -83,5 +91,8 @@ Eksport i import kopii zapasowej (JSON) są zaplanowane na fazę 7 i **jeszcze n
   Aplikacja niczego nie zmienia bez Twojej decyzji.
 - iOS: Safari i aplikacja dodana do ekranu początkowego mają osobne dane. Safari może usunąć dane
   strony nieużywanej przez 7 dni (nie dotyczy aplikacji z ekranu początkowego).
-- Brak trybu offline i powiadomień (faza 8 i 7); start aplikacji wymaga internetu.
+- Przypomnienia działają tylko, gdy aplikacja jest otwarta (brak serwera i powiadomień push);
+  zamknięta aplikacja nic nie wyśle. Na iPhonie powiadomienia systemowe wymagają aplikacji
+  z ekranu początkowego, a komunikat w aplikacji pokazuje się zawsze.
+- Brak trybu offline (faza 8); start aplikacji wymaga internetu.
 - Pełna lista ryzyk: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#7-ryzyka-i-ograniczenia-platformy).

@@ -596,6 +596,7 @@ for (const width of [320, 375, 1024]) {
       ['./#/historia/kalendarz', 'Kalendarz miesięczny'],
       ['./#/historia/pomiary', 'Dodaj pomiar'],
       ['./', 'Ten tydzień'],
+      ['./#/ustawienia', 'Kopia zapasowa'],
     ] as const) {
       await page.goto(path);
       await expect(
@@ -629,5 +630,78 @@ test('a finished workout can be deleted from history, after confirmation', async
   // The record that belonged to the deleted workout is gone from the statistics.
   await page.getByRole('link', { name: 'Statystyki', exact: true }).click();
   await expect(page.getByRole('region', { name: 'Najlepsze wyniki' })).toContainText('62,5 kg');
+  expect(problems).toEqual([]);
+});
+
+test('acceptance test G: export, delete data, import brings everything back', async ({ page }, testInfo) => {
+  const problems = collectProblems(page);
+  await twoPushWorkouts(page);
+  await page.getByRole('link', { name: 'Ustawienia', exact: true }).click();
+  const backup = page.getByRole('region', { name: 'Kopia zapasowa' });
+
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    backup.getByRole('button', { name: 'Eksportuj dane' }).click(),
+  ]);
+  expect(download.suggestedFilename()).toMatch(/^training-backup-\d{4}-\d{2}-\d{2}\.json$/);
+  const file = testInfo.outputPath('backup.json');
+  await download.saveAs(file);
+  await expect(backup.getByRole('status')).toContainText('Przygotowano plik training-backup-');
+
+  // Lose one workout, then restore from the file.
+  await page.getByRole('link', { name: 'Historia i statystyki', exact: true }).click();
+  const list = page.getByRole('list', { name: 'Zakończone treningi' });
+  await list.getByRole('link').first().click();
+  await page.getByRole('button', { name: 'Usuń trening' }).click();
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Usuń trening' }).click();
+  await expect(list.getByRole('link')).toHaveCount(1);
+
+  await page.getByRole('link', { name: 'Ustawienia', exact: true }).click();
+  await backup.getByLabel('Plik kopii zapasowej').setInputFiles(file);
+  const summary = backup.getByRole('region', { name: 'Podsumowanie importowanego pliku' });
+  await expect(summary).toContainText('Zakończone treningi');
+  await expect(summary).toContainText('zastąpi wszystkie obecne dane');
+  await backup.getByRole('button', { name: 'Zastąp dane danymi z pliku' }).click();
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Zastąp dane' }).click();
+  await expect(backup.getByRole('status')).toContainText('Dane zostały zastąpione');
+
+  await page.getByRole('link', { name: 'Historia i statystyki', exact: true }).click();
+  await expect(page.getByRole('list', { name: 'Zakończone treningi' }).getByRole('link')).toHaveCount(2);
+  await page.getByRole('link', { name: 'Statystyki', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Najlepsze wyniki' })).toContainText('65 kg');
+
+  // A file that is not a backup is refused and nothing changes.
+  await page.getByRole('link', { name: 'Ustawienia', exact: true }).click();
+  await backup.getByLabel('Plik kopii zapasowej').setInputFiles({
+    name: 'zly.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from('{"nope":true}'),
+  });
+  await expect(backup.getByRole('alert')).toContainText('nie wygląda na kopię zapasową');
+  expect(problems).toEqual([]);
+});
+
+test('reminders: a reminder appears at the set time, in the app, and settings keep their promise', async ({
+  page,
+}) => {
+  const problems = collectProblems(page);
+  await page.clock.install({ time: new Date(2026, 10, 23, 17, 0) });
+  await createPushDay(page);
+  await page.getByRole('combobox', { name: 'Dzień tygodnia' }).selectOption({ label: 'Poniedziałek' }); // 23 Nov 2026
+  await page.getByRole('link', { name: 'Ustawienia', exact: true }).click();
+  const reminders = page.getByRole('region', { name: 'Przypomnienia o treningu' });
+  await expect(reminders).toContainText('tylko wtedy, gdy aplikacja jest otwarta');
+  await reminders.getByRole('radio', { name: 'Włączone' }).click();
+  await expect(reminders).toContainText('o 17:30');
+
+  await expect(page.getByText('Dziś masz zaplanowany trening')).toHaveCount(0);
+  await page.clock.fastForward('35:00');
+  // Timers inside the database layer only run when the fake clock moves, so keep nudging it.
+  await expect(async () => {
+    await page.clock.runFor(1000);
+    await expect(page.getByText('Dziś masz zaplanowany trening o 18:00.')).toBeVisible({ timeout: 400 });
+  }).toPass({ timeout: 15_000 });
+  await page.getByRole('link', { name: 'Przejdź do treningu' }).click();
+  await expect(page.getByRole('heading', { name: 'Trening', level: 1 })).toBeVisible();
   expect(problems).toEqual([]);
 });

@@ -15,6 +15,7 @@ import type {
   TrainingPlan,
   WorkoutSession,
 } from '@/shared/domain';
+import type { BackupRepository } from '../backup/backupRepository';
 import type { StorageError } from '../errors';
 
 /**
@@ -432,4 +433,5 @@ export interface Repositories {
   readonly sessions: SessionRepository;
   readonly suggestions: SuggestionRepository;
   readonly measurements: MeasurementRepository;
+  readonly backup: BackupRepository;
 }

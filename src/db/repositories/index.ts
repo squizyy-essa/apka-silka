@@ -1,3 +1,4 @@
+import { createDexieBackupRepository } from '../backup/backupRepository';
 import type { TrainingDatabase } from '../database';
 import { createDexieExerciseRepository } from './dexieExerciseRepository';
 import { createDexieMeasurementRepository } from './dexieMeasurementRepository';
@@ -53,5 +54,6 @@ export function createRepositories(db: TrainingDatabase): Repositories {
     sessions: createDexieSessionRepository(db),
     suggestions: createDexieSuggestionRepository(db),
     measurements: createDexieMeasurementRepository(db),
+    backup: createDexieBackupRepository(db),
   };
 }

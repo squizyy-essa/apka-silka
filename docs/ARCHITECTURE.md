@@ -156,7 +156,7 @@ i backendu teraz nie ma i nie ma też żadnych przycisków, które by je udawał
 | 4. Aktywny trening | start z planu / pusty, widok tabeli i kart, zapis każdej serii, statusy, edycje, timer, wznawianie, zakończenie i podsumowanie; **Pulpit: najbliższy trening, szybki start, wznowienie** | pełny trening z zamknięciem aplikacji w trakcie (testy B, F) |
 | 5. Progresja ✅ | double progression, skoki ciężaru, sugestie po nieudanej serii (w treningu) i między treningami (w podsumowaniu), uzasadnienia, zapis decyzji (schemat v4) | reguły pokryte testami (C, D, E); nic nie zmienia się bez zgody |
 | 6. Historia i analityka ✅ | historia, szczegóły i edycja sesji, wykresy, rekordy, kalendarz, pomiary; **Pulpit: podsumowanie aktywności** | statystyki tylko z zapisanych danych, przeliczane po edycji (test I) |
-| 7. Ustawienia i backup | ustawienia timera, przypomnienia, eksport/import JSON | eksport + import odtwarza stan (test G) |
+| 7. Ustawienia i backup ✅ | ustawienia timera, przypomnienia, eksport/import JSON | eksport + import odtwarza stan (test G) |
 | 8. PWA i dopracowanie | service worker, aktualizacje, dostępność, wydajność (podział kodu), testy mobilne. Manifest, ikony i tryb pełnoekranowy zrobione wcześniej (po fazie 1) | aplikacja instalowalna i poprawnie się aktualizuje |
 
 Specyfikacja nie przypisuje Pulpitu (§4) do żadnej fazy – jest rozłożony na fazy 4 i 6, bo
@@ -203,10 +203,10 @@ Stan: ✅ obsłużone i przetestowane, ◐ częściowo (fundament gotowy), ⏳ z
 | 18 | Zmiana strefy czasowej | `localWorkoutDate` zapisane raz przy starcie i nigdy nie przeliczane; dokładny czas w UTC | 4 | ✅ |
 | 19 | Timer kończy się w tle | czas liczony z `endsAt`; po powrocie pokazany stan faktyczny | 4 | ✅ |
 | 20 | Zablokowany dźwięk | timer działa, sygnał wizualny, informacja jak włączyć dźwięk | 4 | ◐ informacja ✅, niesprawdzone na iOS |
-| 21 | Odmowa zgody na powiadomienia | przypomnienia tylko w otwartej aplikacji; brak ponawiania prośby | 7 | ⏳ |
-| 22 | Uszkodzony JSON przy imporcie | czytelny błąd, baza nietknięta | 7 | ⏳ |
-| 23 | Import ze starszej wersji schematu | migracja danych importu do bieżącej wersji przed walidacją; nowsza wersja → odmowa | 7 | ⏳ |
-| 24 | Import z brakującymi relacjami | odmowa z listą problemów, baza nietknięta | 7 | ⏳ |
+| 21 | Odmowa zgody na powiadomienia | przypomnienia tylko w otwartej aplikacji; brak ponawiania prośby | 7 | ✅ (zgoda tylko po kliknięciu; komunikat w aplikacji zawsze) |
+| 22 | Uszkodzony JSON przy imporcie | czytelny błąd, baza nietknięta | 7 | ✅ |
+| 23 | Import ze starszej wersji schematu | migracja danych importu do bieżącej wersji przed walidacją; nowsza wersja → odmowa | 7 | ✅ |
+| 24 | Import z brakującymi relacjami | odmowa z listą problemów, baza nietknięta | 7 | ✅ |
 | 25 | Błąd zapisu / brak miejsca | komunikat `StorageError`, ekran pokazuje stan z bazy, nic nie udaje zapisu | 1+ | ◐ ustawienia ✅ |
 | 26 | Brak ilustracji ćwiczenia | neutralny placeholder | 2 | ✅ |
 | 27 | Usunięcie planu z zachowaniem historii | sesje zostają (mają własną nazwę i migawki); odwołanie do planu może być puste | 3 | ✅ |

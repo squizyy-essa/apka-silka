@@ -1,7 +1,10 @@
 import { useAppInfo } from '@/app/appInfoContext';
-import { Card, CardDescription, CardTitle } from '@/shared/ui/Card';
+import { Card, CardTitle } from '@/shared/ui/Card';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { AppearanceSettings } from './AppearanceSettings';
+import { BackupSettings } from './BackupSettings';
+import { ReminderSettings } from './ReminderSettings';
+import { TimerSettings } from './TimerSettings';
 
 export function SettingsPage() {
   const { appVersion, schemaVersion } = useAppInfo();
@@ -11,6 +14,9 @@ export function SettingsPage() {
       <PageHeader title="Ustawienia" />
       <div className="space-y-4">
         <AppearanceSettings />
+        <TimerSettings />
+        <ReminderSettings />
+        <BackupSettings />
 
         <Card aria-labelledby="about-heading">
           <CardTitle id="about-heading">O aplikacji</CardTitle>
@@ -24,14 +30,6 @@ export function SettingsPage() {
               Lokalnie w tej przeglądarce (IndexedDB), bez konta i bez serwera
             </dd>
           </dl>
-        </Card>
-
-        <Card aria-labelledby="upcoming-settings-heading">
-          <CardTitle id="upcoming-settings-heading">Jeszcze niewdrożone</CardTitle>
-          <CardDescription>
-            Ustawienia timera i dźwięku, przypomnienia oraz eksport i import kopii zapasowej (JSON)
-            pojawią się w fazie 7 projektu.
-          </CardDescription>
         </Card>
       </div>
     </>

@@ -133,6 +133,7 @@ describe('TrainingDatabase', () => {
       timerSoundEnabled: false,
       timerVolume: 0.5,
       remindersEnabled: false,
+      reminderLeadMinutes: 30,
       preferredWeightUnit: 'kg',
       schemaVersion: CURRENT_SCHEMA_VERSION,
     });

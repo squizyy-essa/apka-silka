@@ -22,11 +22,13 @@ export const appSettingsSchema = z.object({
   timerSoundEnabled: z.boolean(),
   timerVolume: z.number().min(0).max(1),
   remindersEnabled: z.boolean(),
-  /** Local time of day, `HH:mm`. */
+  /** Local time of day of the planned workout, `HH:mm`. */
   reminderTime: z
     .string()
     .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
     .optional(),
+  /** The reminder is shown this many minutes before `reminderTime`. */
+  reminderLeadMinutes: z.number().int().min(0).max(240),
   preferredWeightUnit: z.literal('kg'),
   /** Database schema version the row was last written with. */
   schemaVersion: z.number().int().positive(),
@@ -46,6 +48,8 @@ export function createDefaultAppSettings(schemaVersion: number): AppSettings {
     timerSoundEnabled: true,
     timerVolume: 0.8,
     remindersEnabled: false,
+    reminderTime: '18:00',
+    reminderLeadMinutes: 30,
     preferredWeightUnit: 'kg',
     schemaVersion,
   };

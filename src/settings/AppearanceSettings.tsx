@@ -42,9 +42,7 @@ export function AppearanceSettings() {
   return (
     <Card aria-labelledby="appearance-heading">
       <CardTitle id="appearance-heading">Wygląd</CardTitle>
-      <CardDescription>
-        Zmiany są zapisywane od razu i nie wpływają na dane treningowe.
-      </CardDescription>
+      <CardDescription>Zmiany są zapisywane od razu i nie wpływają na dane treningowe.</CardDescription>
 
       {saveError !== null && (
         <ErrorAlert title="Nie udało się zapisać ustawienia" className="mt-4">

@@ -4,7 +4,7 @@ Ten plik jest pamięcią projektu między sesjami pracy. **Na początku każdej 
 go w całości, potem `docs/ARCHITECTURE.md`, i dopiero wtedy zmieniaj kod.** Po każdej fazie
 zaktualizuj wszystkie sekcje.
 
-Ostatnia aktualizacja: 2026-11-23 (ukończone fazy 1–6; z fazy 8 przeniesiono instalację na ekranie początkowym i powiadomienie o aktualizacji).
+Ostatnia aktualizacja: 2026-11-23 (ukończone fazy 1–7; z fazy 8 przeniesiono instalację na ekranie początkowym i powiadomienie o aktualizacji).
 
 ## Jak wznowić pracę
 
@@ -13,8 +13,7 @@ Ostatnia aktualizacja: 2026-11-23 (ukończone fazy 1–6; z fazy 8 przeniesiono 
    `docs/ARCHITECTURE.md`.
 2. `npm install`, potem `npm run check` i `npm run test:e2e` – wszystko musi być zielone, zanim
    zaczniesz cokolwiek zmieniać.
-3. Następna faza do zrobienia: **faza 7 – ustawienia, przypomnienia, eksport/import JSON**
-   (lista zadań niżej).
+3. Następna faza do zrobienia: **faza 8 – PWA i dopracowanie** (lista zadań niżej).
 4. Zasady, których nie wolno łamać: żadnych makiet ani fikcyjnych danych; widoczna kontrolka =
    działająca funkcja; zapis do IndexedDB, nie do stanu komponentu; wydanej wersji schematu bazy
    się nie edytuje (nowa wersja + migracja); funkcja jest „ukończona” dopiero po testach.
@@ -298,15 +297,39 @@ Decyzje:
 - Baza v5: tylko migracja ustawienia widoku treningu na karty (bez nowych tabel); pomiary
   korzystały z istniejącej tabeli.
 
-## Wyniki testów (2026-11-23, koniec fazy 6)
+### Faza 7 – Ustawienia i backup ✅ (2026-11-23)
+
+Zrobione:
+- **Timer** (Ustawienia): domyślny odpoczynek (5–1800 s), dźwięk wł./wył., głośność, „Sprawdź
+  dźwięk” (uczciwy komunikat, gdy przeglądarka blokuje dźwięk; informacja o iOS).
+- **Przypomnienia**: wł./wył., godzina treningu, wyprzedzenie (0–120 min). Pojawiają się tylko w
+  otwartej aplikacji: komunikat w aplikacji zawsze, powiadomienie systemowe tylko po zgodzie, o którą
+  prosi wyłącznie przycisk. Plan stały: w dni tygodnia przypisane dniom planu głównego; elastyczny:
+  codziennie; nic, gdy trening trwa albo już był tego dnia; raz dziennie. Ekran mówi wprost o ograniczeniach (brak push, iOS).
+- **Eksport** (`training-backup-RRRR-MM-DD.json`): wszystkie tabele poza timerem odpoczynku,
+  ilustracje jako Base64, wersja schematu, data, wersja aplikacji.
+- **Import**: rozmiar → JSON → koperta → wersja (nowsza = odmowa) → migracja starszych danych →
+  walidacja każdego wpisu schematem Zod (nieznane pola odrzucane, nic nie jest wykonywane) →
+  unikalność identyfikatorów i relacje → podsumowanie → potwierdzenie → zamiana w jednej
+  transakcji. Przed zamianą można pobrać kopię obecnych danych. Błąd w trakcie = baza bez zmian.
+- Test akceptacyjny G (jednostkowy z fake-indexeddb i e2e w Chrome z prawdziwym pobraniem pliku).
+
+Decyzje:
+- Brak nowej wersji schematu bazy: nowe pole ustawień `reminderLeadMinutes` nie jest indeksowane,
+  braki uzupełnia `normalizeSettings` (także dla importów ze starszych wersji).
+- Import zawsze **zastępuje** dane (bez scalania). Historia może wskazywać usunięty plan lub
+  ćwiczenie – to dozwolone (ma własne migawki); plan i jego dni muszą mieć komplet powiązań.
+- Limity: plik do 100 MB, pojedyncza ilustracja do 5 MB.
+
+## Wyniki testów (2026-11-23, koniec fazy 7)
 
 | Sprawdzenie | Polecenie | Wynik |
 |---|---|---|
 | TypeScript strict | `npm run typecheck` | 0 błędów |
 | ESLint | `npm run lint` | 0 błędów, 0 ostrzeżeń |
-| Testy jednostkowe i komponentowe | `npm test` | 447 / 447 (33 pliki) |
+| Testy jednostkowe i komponentowe | `npm test` | 476 / 476 (36 plików) |
 | Build produkcyjny | `npm run build` | OK |
-| Testy e2e (Chrome, build produkcyjny) | `npm run test:e2e` | 57 / 57 |
+| Testy e2e (Chrome, build produkcyjny) | `npm run test:e2e` | 60 / 60 |
 | Build pod podścieżką (jak GitHub Pages) | ręcznie | działa, zapis ustawień OK, 0 błędów konsoli |
 | GitHub Actions – zadanie `check-and-build` | automatycznie po pushu | OK (typy, lint, testy, build na serwerach GitHuba) |
 | GitHub Actions – zadanie `deploy` | automatycznie po pushu | OK po włączeniu Pages; aplikacja: https://squizyy-essa.github.io/apka-silka/ |
@@ -402,18 +425,19 @@ Uzasadnienia w `docs/ARCHITECTURE.md` (§2 „Odstępstwa”).
 
 ## Kolejne zadania
 
-### Faza 7 – Ustawienia i backup (następna)
+### Faza 8 – PWA i dopracowanie (następna)
 
-Wymagania: `docs/SPEC_REMAINING.md` (ustawienia, przypomnienia, eksport/import).
+Wymagania: `docs/SPEC_REMAINING.md` §16. Manifest, ikony, tryb pełnoekranowy i powiadomienie o
+aktualizacji są już zrobione.
 
-- [ ] Ustawienia timera i przypomnień (tylko w otwartej aplikacji).
-- [ ] Eksport całej bazy do JSON (z wersją schematu).
-- [ ] Import z walidacją, migracją starszych wersji i odmową dla nowszych/uszkodzonych/z brakami
-      relacji (baza nietknięta przy błędzie); test akceptacyjny G; przypadki 21–24.
+- [ ] Service worker z cache zasobów (bez obietnicy pełnego offline), aktualizacja bez utraty bazy i
+      bez przeładowania w trakcie aktywnego treningu.
+- [ ] Podział kodu (główna paczka ok. 1 MB), prośba o trwałe przechowywanie (`storage.persist`).
+- [ ] Dostępność i testy mobilne; ewentualnie podniesienie wersji akcji GitHub.
 
 ### Później
 
-Faza 8 według tabeli w `docs/ARCHITECTURE.md` §6.
+Szczegóły fazy 8 według tabeli w `docs/ARCHITECTURE.md` §6.
 
 ## Do zrobienia przez właściciela projektu
 
@@ -436,3 +460,8 @@ Faza 8 według tabeli w `docs/ARCHITECTURE.md` §6.
 - Historia: przycisk „Usuń trening” w szczegółach zakończonego treningu (z potwierdzeniem; usuwa sesję, ćwiczenia, serie i zapisane sugestie progresji; statystyki i rekordy przeliczają się bez niego). Dotyczy tylko zakończonych treningów.
 - Układ: pola daty w filtrach historii wystawały poza kartę na iPhonie (Safari ignoruje szerokość pola daty). Pola mogą się teraz zwężać (`min-w-0`, `appearance-none`). Testy w Chrome tego błędu nie odtwarzały, więc poprawka jest niesprawdzona na prawdziwym Safari.
 - Testy: 449 jednostkowych, 58 e2e.
+
+## Znane problemy po fazie 7
+- Przypomnienia nie działają przy zamkniętej aplikacji (brak serwera/push); na iPhonie powiadomienia systemowe i tak wymagają instalacji na ekranie początkowym. Niesprawdzone na prawdziwym iPhonie.
+- Pobranie pliku kopii na iPhonie (Safari/aplikacja z ekranu początkowego) niesprawdzone – testy e2e działają w Chrome.
+- Import dużych kopii z wieloma ilustracjami czyta cały plik do pamięci.
