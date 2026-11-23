@@ -409,3 +409,7 @@ Fazy 6–8 według tabeli w `docs/ARCHITECTURE.md` §6.
 
 ## Poprawka 0.6.2 (2026-11-23)
 - Widok kart: po wykonaniu serii zielona poświata wokół karty i zielone kółko z ptaszkiem (ok. 0,9 s). Pokazuje się dopiero, gdy seria faktycznie została zapisana jako wykonana (odrzucone zatwierdzenie go nie pokazuje). Przy włączonym „ogranicz ruch” w systemie animacja jest pomijana.
+
+## Poprawka 0.6.3 (2026-11-23)
+- Trening otwiera się domyślnie w widoku kart. Baza v5: jednorazowo przełącza zapisane ustawienie na karty (potem Tabela/Karty działa jak dotąd i jest zapamiętywane).
+- Testy: 379 jednostkowych, 52 e2e.

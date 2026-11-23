@@ -63,6 +63,8 @@ async function startPush(page: Page) {
   await page.goto('./#/trening');
   await page.getByRole('button', { name: 'Rozpocznij: Push' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Push' })).toBeVisible();
+  // The app opens on cards; most of these tests are written for the table.
+  await page.getByRole('radio', { name: 'Tabela' }).click();
 }
 
 const row = (page: Page, exercise: string, number: number) =>
@@ -256,9 +258,8 @@ test('cards view, empty workout with an added exercise, abandon', async ({ page 
     .getByRole('button')
     .filter({ has: page.getByText('Deska (plank)', { exact: true }) })
     .click();
-  await expect(page.getByRole('article', { name: 'Deska (plank)' })).toBeVisible();
-
-  await page.getByRole('radio', { name: 'Karty' }).click();
+  // The app opens on cards.
+  await expect(page.getByRole('radio', { name: 'Karty' })).toBeChecked();
   const card = page.getByRole('region', { name: 'Deska (plank), seria 1' });
   await expect(card).toContainText('Seria 1 z 3 w treningu');
   await card.getByRole('button', { name: 'Wykonana' }).click();
@@ -321,6 +322,7 @@ for (const width of [320, 375, 768, 1024, 1440]) {
     expect(await overflow(), 'start').toBeLessThanOrEqual(0);
 
     await page.getByRole('button', { name: 'Rozpocznij: Push' }).click();
+    await page.getByRole('radio', { name: 'Tabela' }).click(); // the app opens on cards
     await finishSet(page, BENCH, 1, { kg: '62,5', reps: '10', rir: '2' });
     await expect(page.getByRole('timer')).toBeVisible();
     await page.getByRole('article', { name: BENCH }).getByRole('button', { name: 'Poprzedni wynik' }).click();

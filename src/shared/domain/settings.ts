@@ -41,7 +41,7 @@ export function createDefaultAppSettings(schemaVersion: number): AppSettings {
     id: APP_SETTINGS_ID,
     theme: 'light',
     visualStyle: 'minimal',
-    workoutView: 'table',
+    workoutView: 'cards',
     defaultRestSeconds: 90,
     timerSoundEnabled: true,
     timerVolume: 0.8,

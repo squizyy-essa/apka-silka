@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Exercise } from '@/shared/domain';
+import { createDefaultAppSettings, type Exercise } from '@/shared/domain';
 import { newId } from '@/shared/lib/id';
 import { nowIso } from '@/shared/lib/time';
 import { isolatedDatabaseNames } from '@/test/testDatabase';
@@ -70,7 +70,7 @@ describe('TrainingDatabase', () => {
     db.close();
   });
 
-  it('upgrades a version 3 database to version 4 and keeps its data', async () => {
+  it('upgrades a version 3 database to the current version and keeps its data', async () => {
     const name = nextDatabaseName();
     const bench = sampleExercise('Wyciskanie sztangi');
 
@@ -81,10 +81,27 @@ describe('TrainingDatabase', () => {
 
     const upgraded = new TrainingDatabase(name);
     await upgraded.open();
-    expect(upgraded.verno).toBe(4);
+    expect(upgraded.verno).toBe(CURRENT_SCHEMA_VERSION);
     expect(await upgraded.exercises.get(bench.id)).toEqual(bench);
     expect(await upgraded.progressionSuggestions.count()).toBe(0);
     upgraded.close();
+  });
+
+  it('upgrading to version 5 switches stored settings to the cards view once', async () => {
+    const name = nextDatabaseName();
+    const old = new TrainingDatabase(name, SCHEMA_VERSIONS.slice(0, 4));
+    await old.appSettings.put({ ...createDefaultAppSettings(4), workoutView: 'table' });
+    old.close();
+
+    const upgraded = new TrainingDatabase(name);
+    await upgraded.open();
+    expect((await upgraded.appSettings.get('app'))?.workoutView).toBe('cards');
+    await upgraded.appSettings.update('app', { workoutView: 'table' }); // the user's later choice
+    upgraded.close();
+
+    const reopened = new TrainingDatabase(name);
+    expect((await reopened.appSettings.get('app'))?.workoutView).toBe('table');
+    reopened.close();
   });
 
   it('keeps data after the connection is closed and the database is opened again', async () => {

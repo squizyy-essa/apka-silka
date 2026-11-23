@@ -74,6 +74,19 @@ export const SCHEMA_VERSIONS: readonly SchemaVersion[] = [
       progressionSuggestions: 'id, sessionId, sessionExerciseId, exerciseId, sourceSetId',
     },
   },
+  {
+    version: 5,
+    description: 'The workout opens in the cards view (existing settings are switched once).',
+    stores: {},
+    upgrade: async (transaction) => {
+      await transaction
+        .table('appSettings')
+        .toCollection()
+        .modify((settings: { workoutView?: string }) => {
+          settings.workoutView = 'cards';
+        });
+    },
+  },
 ];
 
 /** Throws when the version list is not a gap-free, ascending sequence starting at 1. */

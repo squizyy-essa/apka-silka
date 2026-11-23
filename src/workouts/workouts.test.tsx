@@ -20,15 +20,28 @@ function renderApp(databaseName: string, initialPath: string) {
 }
 
 /** A plan "PPL" with day "Push": bench press 3 × 8–12 @ 60 kg RIR 2 (rest 120 s) and flyes. */
-async function seedPlan(databaseName: string, reps: readonly [number, number] = [8, 12]) {
+async function seedPlan(
+  databaseName: string,
+  reps: readonly [number, number] = [8, 12],
+  view: 'table' | 'default' = 'table',
+) {
   const runtime = await createAppRuntime({ databaseName });
+  if (view === 'table') {
+    // Most tests are written for the table; the app itself opens on cards.
+    await runtime.repositories.settings.update({ workoutView: 'table' });
+  }
   const { plans } = runtime.repositories;
   const plan = await plans.createPlan({ name: 'PPL', scheduleMode: 'flexible' });
   const day = await plans.addDay(plan.id, 'Push');
   await plans.addExercise(day.id, BENCH?.id ?? '', { restSeconds: 120 });
   await plans.addExercise(day.id, FLY?.id ?? '', { restSeconds: 60 });
   for (const set of (await plans.getDay(day.id))?.exercises[0]?.sets ?? []) {
-    await plans.updateSet(set.id, { targetWeightKg: 60, targetRepsMin: reps[0], targetRepsMax: reps[1], targetRIR: 2 });
+    await plans.updateSet(set.id, {
+      targetWeightKg: 60,
+      targetRepsMin: reps[0],
+      targetRepsMax: reps[1],
+      targetRIR: 2,
+    });
   }
   await plans.addDay(plan.id, 'Pull');
   runtime.dispose();
@@ -113,7 +126,10 @@ describe('workout', () => {
     const timer = within(await screen.findByRole('timer', { name: 'Odpoczynek' }));
     expect(await timer.findByText(/^(2:00|1:5\d)$/)).toBeInTheDocument();
     expect(await card.findByText('Zrobione serie: 1 z 3')).toBeInTheDocument();
-    expect(setRow(card, 1).getByRole('button', { name: 'Seria 1 wykonana – cofnij' })).toHaveAttribute('aria-pressed', 'true');
+    expect(setRow(card, 1).getByRole('button', { name: 'Seria 1 wykonana – cofnij' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
 
     await user.click(timer.getByRole('button', { name: '+15 s' }));
     await waitFor(() => expect(timer.getByText(/^2:1\d$/)).toBeInTheDocument());
@@ -152,9 +168,16 @@ describe('workout', () => {
     // …and so does the database.
     const probe = new TrainingDatabase(databaseName);
     const [session] = await probe.workoutSessions.toArray();
-    expect(session).toMatchObject({ name: 'Push', status: 'completed', wellbeingRating: 4, notes: 'Mocny dzień' });
+    expect(session).toMatchObject({
+      name: 'Push',
+      status: 'completed',
+      wellbeingRating: 4,
+      notes: 'Mocny dzień',
+    });
     const sets = (await probe.sessionSets.toArray()).filter((s) => s.status !== 'skipped');
-    expect(sets.map((s) => [s.status, s.actualWeightKg, s.actualReps, s.actualRIR, s.plannedWeightKg]).sort()).toEqual([
+    expect(
+      sets.map((s) => [s.status, s.actualWeightKg, s.actualReps, s.actualRIR, s.plannedWeightKg]).sort(),
+    ).toEqual([
       ['completed', 62.5, 10, 2, 60],
       ['failed', 60, 7, undefined, 60],
     ]);
@@ -169,9 +192,14 @@ describe('workout', () => {
     const firstRun = renderApp(databaseName, '/trening');
     await user.click(await screen.findByRole('button', { name: 'Rozpocznij: Push' }));
     const card = await benchCard();
-    for (const [number, reps] of [[1, '12'], [2, '11']] as const) {
+    for (const [number, reps] of [
+      [1, '12'],
+      [2, '11'],
+    ] as const) {
       await typeInto(user, setRow(card, number).getByRole('textbox', { name: 'Powt.' }), reps);
-      await user.click(setRow(card, number).getByRole('button', { name: `Oznacz serię ${number} jako wykonaną` }));
+      await user.click(
+        setRow(card, number).getByRole('button', { name: `Oznacz serię ${number} jako wykonaną` }),
+      );
       await card.findByText(`Zrobione serie: ${number} z 3`);
     }
     // Typed but not yet marked as done – must survive too.
@@ -192,7 +220,10 @@ describe('workout', () => {
     expect(setRow(restored, 1).getByRole('textbox', { name: 'kg' })).toHaveValue('60');
     expect(setRow(restored, 2).getByRole('textbox', { name: 'Powt.' })).toHaveValue('11');
     expect(setRow(restored, 3).getByRole('textbox', { name: 'kg' })).toHaveValue('57,5');
-    expect(setRow(restored, 3).getByRole('button', { name: 'Oznacz serię 3 jako wykonaną' })).toHaveAttribute('aria-pressed', 'false');
+    expect(setRow(restored, 3).getByRole('button', { name: 'Oznacz serię 3 jako wykonaną' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
   });
 
   it('abandoning from the resume prompt needs a confirmation and frees the app for a new workout', async () => {
@@ -246,6 +277,17 @@ describe('workout', () => {
     probe.close();
   });
 
+  it('opens on the cards view by default', async () => {
+    const user = userEvent.setup();
+    const databaseName = nextDatabaseName();
+    await seedPlan(databaseName, [8, 12], 'default');
+    renderApp(databaseName, '/trening');
+    await user.click(await screen.findByRole('button', { name: 'Rozpocznij: Push' }));
+
+    expect(await screen.findByRole('region', { name: `${BENCH?.name ?? ''}, seria 1` })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Karty' })).toBeChecked();
+  });
+
   it('shows the previous result only on request, by exercise id', async () => {
     const user = userEvent.setup();
     const databaseName = nextDatabaseName();
@@ -291,7 +333,9 @@ describe('workout', () => {
     expect(await skipped.findByText('Pominięte')).toBeInTheDocument();
     await user.click(skipped.getByRole('button', { name: 'Przywróć' }));
     await waitFor(() =>
-      expect(within(screen.getByRole('article', { name: FLY?.name ?? '' })).queryByText('Pominięte')).not.toBeInTheDocument(),
+      expect(
+        within(screen.getByRole('article', { name: FLY?.name ?? '' })).queryByText('Pominięte'),
+      ).not.toBeInTheDocument(),
     );
 
     // Other screens stay usable; a bar leads back; the plan was not changed.
@@ -302,7 +346,12 @@ describe('workout', () => {
 
     const probe = new TrainingDatabase(databaseName);
     const plannedBench = await probe.plannedExercises.where('planDayId').equals(day.id).first();
-    expect(await probe.plannedSets.where('plannedExerciseId').equals(plannedBench?.id ?? '').count()).toBe(3);
+    expect(
+      await probe.plannedSets
+        .where('plannedExerciseId')
+        .equals(plannedBench?.id ?? '')
+        .count(),
+    ).toBe(3);
     probe.close();
   });
 
@@ -342,7 +391,9 @@ describe('dashboard', () => {
     await user.click(next.getByRole('button', { name: 'Rozpocznij trening' }));
     expect(await screen.findByRole('heading', { level: 1, name: 'Push' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Zakończ trening' }));
-    await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Zakończ i zapisz' }));
+    await user.click(
+      within(await screen.findByRole('dialog')).getByRole('button', { name: 'Zakończ i zapisz' }),
+    );
     await screen.findByRole('region', { name: 'Podsumowanie treningu' });
     await user.click(screen.getByRole('link', { name: 'Gotowe' }));
 
@@ -363,7 +414,6 @@ describe('dashboard', () => {
     await user.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Wznów' }));
     expect(await screen.findByRole('heading', { level: 1, name: 'Push' })).toBeInTheDocument();
   });
-
 });
 
 const benchWeights = (sets: readonly { plannedWeightKg?: number | undefined }[]) =>
@@ -393,11 +443,15 @@ describe('acceptance test E: failed set suggestions', () => {
   it('shows two options with reasons and changes nothing by itself', async () => {
     const { databaseName, card, suggestion } = await failFirstSet();
 
-    expect(suggestion.getByText(/Plan: 60 kg × 12\. Wykonano: 60 kg × 9 \(3 powtórzenia mniej\)/)).toBeInTheDocument();
+    expect(
+      suggestion.getByText(/Plan: 60 kg × 12\. Wykonano: 60 kg × 9 \(3 powtórzenia mniej\)/),
+    ).toBeInTheDocument();
     expect(suggestion.getByText('Zmniejsz ciężar do 57,5 kg')).toBeInTheDocument();
     expect(suggestion.getByText('Zostań przy 60 kg, cel 9 powtórzeń')).toBeInTheDocument();
     expect(suggestion.getAllByRole('listitem')).toHaveLength(2);
-    expect(suggestion.getByText(/nie gwarantuje wyniku i nic nie zmieni się bez Twojej decyzji/)).toBeInTheDocument();
+    expect(
+      suggestion.getByText(/nie gwarantuje wyniku i nic nie zmieni się bez Twojej decyzji/),
+    ).toBeInTheDocument();
 
     // The next sets still have their original plan, in the screen and in the database.
     expect(setRow(card, 2).getByText('Plan: 60 kg × 12, RIR 2')).toBeInTheDocument();
@@ -431,7 +485,9 @@ describe('acceptance test E: failed set suggestions', () => {
   it('applies the reps option to the next pending set', async () => {
     const first = await failFirstSet();
     await first.user.click(
-      first.suggestion.getByRole('button', { name: 'Zastosuj: Zostań przy 60 kg, cel 9 powtórzeń (seria 2)' }),
+      first.suggestion.getByRole('button', {
+        name: 'Zastosuj: Zostań przy 60 kg, cel 9 powtórzeń (seria 2)',
+      }),
     );
     expect(await setRow(first.card, 2).findByText('Plan: 60 kg × 9, RIR 2')).toBeInTheDocument();
   });
@@ -517,7 +573,9 @@ describe('acceptance tests C and D: suggestions after the workout', () => {
     const item = within(await suggestions.findByRole('listitem', { name: `Sugestia: ${BENCH?.name ?? ''}` }));
     expect(item.getByText('Zwiększ ciężar')).toBeInTheDocument();
     expect(
-      item.getByText('W 3 seriach osiągnąłeś 12 powtórzeń przy RIR 2. Możesz spróbować zwiększyć ciężar z 60 do 62,5 kg.'),
+      item.getByText(
+        'W 3 seriach osiągnąłeś 12 powtórzeń przy RIR 2. Możesz spróbować zwiększyć ciężar z 60 do 62,5 kg.',
+      ),
     ).toBeInTheDocument();
     // Showing the suggestion changed nothing.
     expect(await planBenchWeights(databaseName)).toEqual([60, 60, 60]);
@@ -542,7 +600,9 @@ describe('acceptance tests C and D: suggestions after the workout', () => {
     // The recorded workout keeps what was really done.
     const probe = new TrainingDatabase(databaseName);
     expect(
-      (await probe.sessionSets.toArray()).flatMap((set) => (set.actualWeightKg === undefined ? [] : [set.actualWeightKg])),
+      (await probe.sessionSets.toArray()).flatMap((set) =>
+        set.actualWeightKg === undefined ? [] : [set.actualWeightKg],
+      ),
     ).toEqual([60, 60, 60]);
     probe.close();
   });
