@@ -248,7 +248,7 @@ describe('training plans', () => {
     expect(screen.queryByText('Główny')).not.toBeInTheDocument();
 
     const act = async (item: string) => {
-      await user.click(screen.getByRole('button', { name: 'Działania na planie' }));
+      await user.click(await screen.findByRole('button', { name: 'Działania na planie' }));
       await user.click(await screen.findByRole('menuitem', { name: item }));
     };
 

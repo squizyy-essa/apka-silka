@@ -76,8 +76,10 @@ Eksport i import kopii zapasowej (JSON) są zaplanowane na fazę 7 i **jeszcze n
 
 ## Znane ograniczenia
 
-- Część funkcji (progresja, historia, statystyki, pomiary) nie jest
-  jeszcze wdrożona – ekrany mówią o tym wprost.
+- Część funkcji (historia, statystyki, pomiary) nie jest jeszcze wdrożona – ekrany mówią
+  o tym wprost.
+- Sugestie progresji to proste, jawne reguły oparte na zapisanych wynikach, a nie model zmęczenia.
+  Aplikacja niczego nie zmienia bez Twojej decyzji.
 - iOS: Safari i aplikacja dodana do ekranu początkowego mają osobne dane. Safari może usunąć dane
   strony nieużywanej przez 7 dni (nie dotyczy aplikacji z ekranu początkowego).
 - Brak trybu offline i powiadomień (faza 8 i 7); start aplikacji wymaga internetu.

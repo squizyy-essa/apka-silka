@@ -9,6 +9,7 @@ const RULE_MESSAGES: Readonly<Record<PlanRuleError['violation'], string>> = {
   'plan-archived': 'Zarchiwizowanego planu nie można ustawić jako głównego. Najpierw go przywróć.',
   'no-next-exercise': 'Brak kolejnego ćwiczenia, z którym można utworzyć superserię.',
   'stale-order': 'Lista zmieniła się w międzyczasie. Spróbuj ponownie.',
+  'plan-changed': 'Ciężar w planie zmienił się od tego treningu, więc sugestia już nie pasuje.',
 };
 
 export function planErrorMessage(error: unknown): string {

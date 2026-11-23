@@ -101,7 +101,7 @@ test('acceptance test B: a full workout ends up in the database exactly as perfo
   const summary = page.getByRole('region', { name: 'Podsumowanie treningu' });
   await expect(summary).toContainText('1045 kg');
   await expect(summary).toContainText('4/5 – Dobrze');
-  const record = page.getByRole('listitem', { name: BENCH });
+  const record = page.getByRole('listitem', { name: BENCH, exact: true });
   await expect(record).toContainText('1. 62,5 kg × 10, RIR 2');
   await expect(record).toContainText('2. 60 kg × 7 – nieudana');
   await expect(record).toContainText('3. pominięta');
@@ -315,3 +315,80 @@ for (const width of [320, 375, 768, 1024, 1440]) {
     expect(await overflow(), 'summary').toBeLessThanOrEqual(0);
   });
 }
+
+async function finishWorkoutFromDialog(page: Page) {
+  await page.getByRole('button', { name: 'Zakończ trening' }).click();
+  await page.getByRole('dialog', { name: 'Zakończyć trening?' }).getByRole('button', { name: 'Zakończ i zapisz' }).click();
+}
+
+const benchPlanText = async (page: Page) => {
+  await page.goto('./#/plany');
+  await page.getByRole('link', { name: /PPL/ }).click();
+  await page.getByRole('link', { name: /^Push/ }).click();
+  return page.getByRole('article', { name: BENCH });
+};
+
+test('acceptance test C: 12/12/12 at RIR 2 → suggestion 62,5 kg; the plan changes only after confirmation', async ({
+  page,
+}) => {
+  const problems = collectProblems(page);
+  await createPushDay(page);
+  await startPush(page);
+  for (const number of [1, 2, 3]) {
+    await finishSet(page, BENCH, number, { reps: '12', rir: '2' });
+    await page.getByRole('timer').getByRole('button', { name: 'Pomiń odpoczynek' }).click();
+  }
+  await finishWorkoutFromDialog(page);
+
+  const suggestion = page.getByRole('listitem', { name: `Sugestia: ${BENCH}` });
+  await expect(suggestion).toContainText('Zwiększ ciężar');
+  await expect(suggestion).toContainText(
+    'W 3 seriach osiągnąłeś 12 powtórzeń przy RIR 2. Możesz spróbować zwiększyć ciężar z 60 do 62,5 kg.',
+  );
+  // Nothing changed yet – not even after leaving and coming back.
+  await expect(await benchPlanText(page)).toContainText('3 serie · 8–12 powt. · 60 kg');
+  await page.goBack();
+  await page.goBack();
+  await page.goBack();
+  await expect(page.getByRole('listitem', { name: `Sugestia: ${BENCH}` })).toBeVisible();
+
+  await page.getByRole('button', { name: `Zastosuj w planie: ${BENCH}` }).click();
+  await page.getByRole('alertdialog', { name: 'Zmienić plan?' }).getByRole('button', { name: 'Zmień plan' }).click();
+  await expect(page.getByRole('listitem', { name: `Sugestia: ${BENCH}` })).toContainText('Zastosowano w planie');
+
+  await expect(await benchPlanText(page)).toContainText('3 serie · 8–12 powt. · 62,5 kg');
+  expect(problems).toEqual([]);
+});
+
+test('acceptance test E: a failed set offers two options; nothing is applied until chosen', async ({ page }) => {
+  const problems = collectProblems(page);
+  await createPushDay(page);
+  await startPush(page);
+  const first = row(page, BENCH, 1);
+  await enter(first.getByRole('textbox', { name: 'Powt.' }), '7');
+  await first.getByRole('button', { name: 'Więcej działań: seria 1' }).click();
+  await page.getByRole('menuitem', { name: 'Oznacz jako nieudaną' }).click();
+
+  const suggestion = page.getByRole('region', { name: `Sugestia po nieudanej serii 1: ${BENCH}` });
+  await expect(suggestion).toContainText('Zmniejsz ciężar do 57,5 kg');
+  await expect(suggestion).toContainText('Zostań przy 60 kg, cel 7 powtórzeń');
+  await expect(row(page, BENCH, 2)).toContainText('Plan: 60 kg × 8–12, RIR 2');
+
+  await suggestion.getByRole('button', { name: /^Zastosuj: Zmniejsz ciężar do 57,5 kg/ }).click();
+
+  await expect(row(page, BENCH, 2)).toContainText('Plan: 57,5 kg × 8–12, RIR 2');
+  await expect(row(page, BENCH, 3)).toContainText('Plan: 60 kg × 8–12, RIR 2');
+  await expect(row(page, BENCH, 1)).toContainText('Nieudana');
+  await expect(suggestion).toHaveCount(0);
+
+  // The decision survives a reload; the plan template is untouched.
+  await page.reload();
+  await page
+    .getByRole('alertdialog', { name: 'Czy chcesz wznowić trening?' })
+    .getByRole('button', { name: 'Wznów' })
+    .click();
+  await expect(row(page, BENCH, 2)).toContainText('Plan: 57,5 kg × 8–12, RIR 2');
+  await expect(page.getByRole('region', { name: /Sugestia po nieudanej serii/ })).toHaveCount(0);
+  await expect(await benchPlanText(page)).toContainText('3 serie · 8–12 powt. · 60 kg');
+  expect(problems).toEqual([]);
+});

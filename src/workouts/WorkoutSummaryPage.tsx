@@ -12,6 +12,7 @@ import { buttonStyles } from '@/shared/ui/buttonStyles';
 import { Card, CardTitle } from '@/shared/ui/Card';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { EmptyState, ErrorAlert, LoadingState } from '@/shared/ui/states';
+import { NextSessionSuggestions } from './NextSessionSuggestions';
 import {
   describeResult,
   formatDuration,
@@ -135,6 +136,8 @@ function Summary({ detail }: { readonly detail: SessionDetail }) {
           </ul>
         )}
       </Card>
+
+      <NextSessionSuggestions detail={detail} />
 
       <Link to={ROUTE_PATHS.dashboard} className={`${buttonStyles()} mt-4`}>
         Gotowe

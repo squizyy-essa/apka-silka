@@ -67,6 +67,13 @@ export const SCHEMA_VERSIONS: readonly SchemaVersion[] = [
       supersetGroups: 'id, planDayId',
     },
   },
+  {
+    version: 4,
+    description: 'Progression suggestions and what the user decided about them.',
+    stores: {
+      progressionSuggestions: 'id, sessionId, sessionExerciseId, exerciseId, sourceSetId',
+    },
+  },
 ];
 
 /** Throws when the version list is not a gap-free, ascending sequence starting at 1. */

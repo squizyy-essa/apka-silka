@@ -5,6 +5,7 @@ import type {
   PlanDay,
   PlannedExercise,
   PlannedSet,
+  ProgressionSuggestion,
   RestTimerState,
   ScheduleMode,
   SessionExercise,
@@ -305,6 +306,16 @@ export interface SessionRepository {
     exerciseId: string,
     excludeSessionId: string,
   ): Promise<{ readonly session: WorkoutSession; readonly sets: readonly SessionSet[] } | null>;
+  /**
+   * Finished workouts that contain this exact exercise and started before
+   * `startedBefore`, newest first (at most `limit`). Used to look back over
+   * repeated results when judging progress.
+   */
+  getExerciseHistory(
+    exerciseId: string,
+    startedBefore: string,
+    limit: number,
+  ): Promise<readonly ExerciseOccurrence[]>;
   /** Plan day of the most recently completed workout of the given plan. */
   getLastCompletedDayId(planId: string): Promise<string | undefined>;
 
@@ -315,6 +326,70 @@ export interface SessionRepository {
   ): Unsubscribe;
   saveRestTimer(timer: RestTimerState): Promise<void>;
   clearRestTimer(sessionId: string): Promise<void>;
+}
+
+/** One exercise as it was recorded in one finished workout. */
+export interface ExerciseOccurrence {
+  readonly session: WorkoutSession;
+  readonly exercise: SessionExercise;
+  readonly sets: readonly SessionSet[];
+}
+
+export type FailedSetOptionKind = 'lower_weight' | 'adjust_reps';
+
+/** A weight change of one planned set that the user agreed to. */
+export interface PlanWeightChangeInput {
+  readonly plannedSetId: string;
+  readonly fromKg: number;
+  readonly toKg: number;
+}
+
+/** A between-workouts recommendation the user decides about, with the text that was shown. */
+export interface PlanSuggestionInput {
+  readonly sessionExerciseId: string;
+  readonly kind: 'increase_weight' | 'consider_decrease';
+  readonly title: string;
+  readonly explanation: string;
+  readonly changes: readonly PlanWeightChangeInput[];
+}
+
+/**
+ * What the user decided about progression suggestions. A suggestion is never
+ * applied by itself: every change to a set or to the plan goes through one of
+ * these methods, which the user triggers with a button. Each decision is
+ * stored together with what was proposed.
+ * Rejects with `SessionRuleError`, `PlanRuleError`, `ValidationError` or `StorageError`.
+ */
+export interface SuggestionRepository {
+  /** All decisions of one workout (live). */
+  observeForSession(
+    sessionId: string,
+    listener: (suggestions: ProgressionSuggestion[]) => void,
+    onError?: ErrorListener,
+  ): Unsubscribe;
+
+  /**
+   * Applies the chosen option of the suggestion for a failed set to the next
+   * pending working set of the same exercise – and to nothing else. The
+   * suggestion is recomputed from the stored sets, so a stale screen cannot
+   * apply numbers that no longer match (`suggestion-outdated`).
+   */
+  applyFailedSetOption(
+    failedSetId: string,
+    kind: FailedSetOptionKind,
+    now?: Date,
+  ): Promise<ProgressionSuggestion>;
+  /** Records that the user dismissed the suggestion; changes no set. */
+  ignoreFailedSetSuggestion(failedSetId: string, now?: Date): Promise<ProgressionSuggestion>;
+
+  /**
+   * Writes the new weights to the planned sets (all or none) and records the
+   * decision. Rejects with `plan-changed` when the plan no longer has a
+   * lower (increase) / higher (decrease) weight than the proposed one.
+   */
+  applyToPlan(input: PlanSuggestionInput, now?: Date): Promise<ProgressionSuggestion>;
+  /** Records that the user dismissed the recommendation; the plan stays as it is. */
+  ignoreForPlan(input: PlanSuggestionInput, now?: Date): Promise<ProgressionSuggestion>;
 }
 
 export type SessionSetPatch = {
@@ -334,4 +409,5 @@ export interface Repositories {
   readonly exercises: ExerciseRepository;
   readonly plans: PlanRepository;
   readonly sessions: SessionRepository;
+  readonly suggestions: SuggestionRepository;
 }

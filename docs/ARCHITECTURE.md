@@ -154,7 +154,7 @@ i backendu teraz nie ma i nie ma też żadnych przycisków, które by je udawał
 | 2. Biblioteka ćwiczeń | początkowa baza ćwiczeń, wyszukiwanie, filtry, własne ćwiczenia, ilustracje, pole numeryczne z obsługą przecinka | ćwiczenie można utworzyć, znaleźć, edytować i odczytać po odświeżeniu |
 | 3. Kreator planów | wiele planów, dni, tryb stały/elastyczny, serie, superserie, zamienniki, duplikowanie, drag and drop | da się zbudować i zapisać pełny plan Push/Pull/Legs (test A) |
 | 4. Aktywny trening | start z planu / pusty, widok tabeli i kart, zapis każdej serii, statusy, edycje, timer, wznawianie, zakończenie i podsumowanie; **Pulpit: najbliższy trening, szybki start, wznowienie** | pełny trening z zamknięciem aplikacji w trakcie (testy B, F) |
-| 5. Progresja | double progression, skoki ciężaru, sugestie po nieudanej serii i między treningami, uzasadnienia | reguły pokryte testami (C, D, E); nic nie zmienia się bez zgody |
+| 5. Progresja ✅ | double progression, skoki ciężaru, sugestie po nieudanej serii (w treningu) i między treningami (w podsumowaniu), uzasadnienia, zapis decyzji (schemat v4) | reguły pokryte testami (C, D, E); nic nie zmienia się bez zgody |
 | 6. Historia i analityka | historia, szczegóły i edycja sesji, wykresy, rekordy, kalendarz, pomiary; **Pulpit: podsumowanie aktywności** | statystyki tylko z zapisanych danych, przeliczane po edycji (test I) |
 | 7. Ustawienia i backup | ustawienia timera, przypomnienia, eksport/import JSON | eksport + import odtwarza stan (test G) |
 | 8. PWA i dopracowanie | service worker, aktualizacje, dostępność, wydajność (podział kodu), testy mobilne. Manifest, ikony i tryb pełnoekranowy zrobione wcześniej (po fazie 1) | aplikacja instalowalna i poprawnie się aktualizuje |
@@ -194,11 +194,11 @@ Stan: ✅ obsłużone i przetestowane, ◐ częściowo (fundament gotowy), ⏳ z
 | 9 | Pominięcie całego ćwiczenia | `isSkipped`, serie oczekujące → pominięte; nie liczą się do objętości ani progresji | 4 | ✅ |
 | 10 | Zakończenie bez wykonanej serii | ostrzeżenie; do wyboru zapis pustego treningu albo porzucenie | 4 | ✅ |
 | 11 | Ciężar 0 kg | poprawna wartość, różna od „nie podano” | 1/3 | ✅ |
-| 12 | Ciężar 62,5 kg | pole przyjmuje przecinek i kropkę; obliczenia w jednostkach 0,01 kg bez błędów zmiennoprzecinkowych | 3/5 | ◐ wpisywanie ✅ |
-| 13 | Brak RIR | zapisane jako brak danych; nie potwierdza celu RIR; bez celu RIR liczą się tylko powtórzenia | 5 | ◐ model ✅ |
-| 14 | Więcej powtórzeń niż cel | zapis rzeczywistej liczby; cel uznany za osiągnięty | 5 | ⏳ |
-| 15 | Mniej powtórzeń niż plan | zapis rzeczywistej liczby, status nieudana, dwie sugestie do wyboru | 4/5 | ◐ zapis ✅, sugestie ⏳ |
-| 16 | Niewykonane wszystkie serie | pozostałe → pominięte przy zakończeniu; brak sugestii zwiększenia ciężaru | 4/5 | ◐ zapis ✅ |
+| 12 | Ciężar 62,5 kg | pole przyjmuje przecinek i kropkę; obliczenia w gramach bez błędów zmiennoprzecinkowych | 3/5 | ✅ |
+| 13 | Brak RIR | zapisane jako brak danych; nie potwierdza celu RIR; bez celu RIR liczą się tylko powtórzenia | 5 | ✅ |
+| 14 | Więcej powtórzeń niż cel | zapis rzeczywistej liczby; cel uznany za osiągnięty | 5 | ✅ |
+| 15 | Mniej powtórzeń niż plan | zapis rzeczywistej liczby, status nieudana, dwie sugestie do wyboru | 4/5 | ✅ |
+| 16 | Niewykonane wszystkie serie | pozostałe → pominięte przy zakończeniu; brak sugestii zwiększenia ciężaru | 4/5 | ✅ |
 | 17 | Dwa treningi jednego dnia | dwie osobne sesje z tą samą datą lokalną; kalendarz pokazuje listę | 4/6 | ◐ zapis ✅ |
 | 18 | Zmiana strefy czasowej | `localWorkoutDate` zapisane raz przy starcie i nigdy nie przeliczane; dokładny czas w UTC | 4 | ✅ |
 | 19 | Timer kończy się w tle | czas liczony z `endsAt`; po powrocie pokazany stan faktyczny | 4 | ✅ |

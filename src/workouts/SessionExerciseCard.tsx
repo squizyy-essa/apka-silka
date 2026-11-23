@@ -1,8 +1,8 @@
 import { ArrowDown, ArrowLeftRight, ArrowUp, EyeOff, History, Plus, Trash2, Undo2 } from 'lucide-react';
 import { useState } from 'react';
-import type { SessionRepository } from '@/db';
+import type { SessionRepository, SuggestionRepository } from '@/db';
 import { ExercisePickerDialog } from '@/exercises/ExercisePickerDialog';
-import type { SessionSet, WorkoutSession } from '@/shared/domain';
+import type { ProgressionSuggestion, SessionSet, WorkoutSession } from '@/shared/domain';
 import { cn } from '@/shared/lib/cn';
 import { ignoreRejection, type RunSave } from '@/shared/lib/useSaveGuard';
 import type { SessionExerciseWithSets } from '@/shared/logic/workout';
@@ -11,6 +11,7 @@ import { AutosaveTextField, NumericField } from '@/shared/ui/autosaveFields';
 import { Badge } from '@/shared/ui/Badge';
 import { Button } from '@/shared/ui/Button';
 import { RirHelp } from '@/shared/ui/RirHelp';
+import { FailedSetSuggestions } from './FailedSetSuggestions';
 import { DoneButton, SetFields } from './SetControls';
 import { setMenuItems } from './setMenu';
 import {
@@ -91,6 +92,9 @@ export interface SessionExerciseCardProps {
   readonly position: { readonly index: number; readonly total: number };
   readonly supersetLabel: string | undefined;
   readonly repository: SessionRepository;
+  readonly suggestions: SuggestionRepository;
+  /** Decisions about progression suggestions already made in this workout. */
+  readonly decisions: readonly ProgressionSuggestion[] | null;
   readonly run: RunSave;
   /** Marks a set as done/failed and starts the rest timer when one is due. */
   readonly onFinishSet: (setId: string, status: 'completed' | 'failed') => void;
@@ -103,6 +107,8 @@ export function SessionExerciseCard({
   position,
   supersetLabel,
   repository,
+  suggestions,
+  decisions,
   run,
   onFinishSet,
   onMove,
@@ -253,6 +259,13 @@ export function SessionExerciseCard({
             );
           })}
         </ol>
+
+        <FailedSetSuggestions
+          item={item}
+          decisions={decisions}
+          repository={suggestions}
+          run={run}
+        />
 
         <div className="flex flex-wrap items-end gap-2">
           <Button

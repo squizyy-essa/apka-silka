@@ -4,7 +4,7 @@ Ten plik jest pamięcią projektu między sesjami pracy. **Na początku każdej 
 go w całości, potem `docs/ARCHITECTURE.md`, i dopiero wtedy zmieniaj kod.** Po każdej fazie
 zaktualizuj wszystkie sekcje.
 
-Ostatnia aktualizacja: 2026-11-17 (ukończone fazy 1–4; faza 5 w toku: silnik progresji gotowy, brak ekranów i zapisu sugestii; z fazy 8 przeniesiono instalację na ekranie początkowym i powiadomienie o aktualizacji).
+Ostatnia aktualizacja: 2026-11-23 (ukończone fazy 1–5; z fazy 8 przeniesiono instalację na ekranie początkowym i powiadomienie o aktualizacji).
 
 ## Jak wznowić pracę
 
@@ -13,8 +13,8 @@ Ostatnia aktualizacja: 2026-11-17 (ukończone fazy 1–4; faza 5 w toku: silnik 
    `docs/ARCHITECTURE.md`.
 2. `npm install`, potem `npm run check` i `npm run test:e2e` – wszystko musi być zielone, zanim
    zaczniesz cokolwiek zmieniać.
-3. W toku: **faza 5 – progresja**. Silnik reguł jest gotowy i przetestowany; zostały ekrany,
-   zapis sugestii i testy e2e (lista zadań niżej).
+3. Następna faza do zrobienia: **faza 6 – historia, analityka, kalendarz, pomiary** (lista
+   zadań niżej).
 4. Zasady, których nie wolno łamać: żadnych makiet ani fikcyjnych danych; widoczna kontrolka =
    działająca funkcja; zapis do IndexedDB, nie do stanu komponentu; wydanej wersji schematu bazy
    się nie edytuje (nowa wersja + migracja); funkcja jest „ukończona” dopiero po testach.
@@ -229,15 +229,57 @@ Czego **nie ma** (ekrany mówią o tym wprost i nie mają żadnych kontrolek):
 - W Ustawieniach działa tylko sekcja Wygląd; timer, przypomnienia i backup – faza 7.
 - Service worker i tryb offline – faza 8 (manifest, ikony i powiadomienie o aktualizacji już są).
 
-## Wyniki testów (2026-11-16, koniec fazy 4)
+### Faza 5 – Progresja ✅ (2026-11-17 reguły, 2026-11-23 ekrany i zapis)
+
+Kryterium: „reguły przechodzą testy jednostkowe, a sugestie nigdy nie zmieniają danych bez zgody”
+– spełnione i potwierdzone testami (jednostkowymi, komponentowymi i w przeglądarce).
+
+Co rzeczywiście działa:
+
+- **Silnik reguł** (`src/progression/`, czyste funkcje): double progression (tylko serie robocze,
+  pominięte i niewykonane nie liczą się, brak RIR nie potwierdza celu, bez celu RIR liczą się
+  same powtórzenia), skok ćwiczenia (domyślnie 2,5 kg) z arytmetyką w gramach, sugestie po
+  nieudanej serii (do dwóch opcji), rekomendacje po treningu, polskie uzasadnienia z liczbami.
+- **W treningu:** po oznaczeniu serii roboczej jako nieudanej pojawia się karta z opcjami
+  „Zmniejsz ciężar” i „Zostań przy tym ciężarze, cel = wykonane powtórzenia”, w widoku tabeli
+  i kart. „Zastosuj” zmienia plan tylko najbliższej oczekującej serii roboczej tego ćwiczenia
+  w tej sesji (wykonane serie i szablon planu zostają bez zmian); „Zignoruj” nic nie zmienia.
+  Bez kolejnej oczekującej serii karta jest tylko informacją.
+- **W podsumowaniu treningu:** „Sugestie na następny trening” dla każdego wykonanego ćwiczenia
+  (zwiększ ciężar / spróbuj zwiększyć powtórzenia / utrzymaj / rozważ zmniejszenie po 2
+  treningach z rzędu bez celu przy tym samym ciężarze – historia z `getExerciseHistory`).
+  „Zastosuj w planie” (po potwierdzeniu) zmienia ciężar docelowy serii planu, „Zignoruj” nic.
+- **Zapis decyzji** (schemat bazy **v4**, tabela `progressionSuggestions`): co zaproponowano
+  (opcje i uzasadnienie w brzmieniu z chwili pokazania), co wybrano i do jakiej serii zastosowano.
+  Rekord powstaje w chwili decyzji; sugestia bez decyzji nie jest zapisywana (stan „oczekuje”
+  wynika z braku rekordu).
+- **Zabezpieczenia w repozytorium (jedna transakcja):** sugestia po nieudanej serii jest
+  przeliczana z zapisanych danych w chwili zastosowania (`suggestion-outdated`, gdy wyniki
+  zmieniono po jej pokazaniu); seria docelowa musi nadal być oczekująca (`no-target-set`);
+  jedna decyzja na sugestię (`suggestion-decided`); zastosowanie w planie tylko w kierunku
+  sugestii – plan zmieniony od treningu → odmowa `plan-changed`, usunięta seria planu →
+  odmowa, w obu przypadkach nic nie jest zapisane.
+- Wpisana wcześniej wartość w serii docelowej zostaje, chyba że tylko powtarzała stary plan
+  (wtedy jest czyszczona, żeby nie zasłaniała nowego celu).
+
+Ograniczenia fazy 5:
+
+- Sugestie „spróbuj zwiększyć powtórzenia”, „utrzymaj” i „zwiększ trudność” (ćwiczenie z masą
+  ciała bez obciążenia) są tylko informacją – bez przycisku zastosowania.
+- Sugestii nie ma dla ćwiczeń na czas i dystans ani dla serii rozgrzewkowych.
+- Sugestie to proste reguły, nie model fizjologiczny; ekran mówi to wprost.
+- Skok progresji ćwiczenia ustawia się w kreatorze planu (pole już istniało); w sesji jest to
+  migawka z chwili startu.
+
+## Wyniki testów (2026-11-23, koniec fazy 5)
 
 | Sprawdzenie | Polecenie | Wynik |
 |---|---|---|
 | TypeScript strict | `npm run typecheck` | 0 błędów |
 | ESLint | `npm run lint` | 0 błędów, 0 ostrzeżeń |
-| Testy jednostkowe i komponentowe | `npm test` | 264 / 264 (19 plików) |
+| Testy jednostkowe i komponentowe | `npm test` | 372 / 372 (25 plików) |
 | Build produkcyjny | `npm run build` | OK |
-| Testy e2e (Chrome, build produkcyjny) | `npm run test:e2e` | 49 / 49 |
+| Testy e2e (Chrome, build produkcyjny) | `npm run test:e2e` | 51 / 51 |
 | Build pod podścieżką (jak GitHub Pages) | ręcznie | działa, zapis ustawień OK, 0 błędów konsoli |
 | GitHub Actions – zadanie `check-and-build` | automatycznie po pushu | OK (typy, lint, testy, build na serwerach GitHuba) |
 | GitHub Actions – zadanie `deploy` | automatycznie po pushu | OK po włączeniu Pages; aplikacja: https://squizyy-essa.github.io/apka-silka/ |
@@ -318,7 +360,10 @@ Uzasadnienia w `docs/ARCHITECTURE.md` (§2 „Odstępstwa”).
   byłoby pominięte. Prawdziwej klawiatury to nie dotyczy.
 - Testy komponentowe planów bywały niestabilne na wolniejszych maszynach (raz lokalnie, raz na
   GitHubie): pomocnik testowy nie czekał na zapis dodanego ćwiczenia, a limit oczekiwania
-  wynosił 1 s. Poprawione (czekanie na pojawienie się ćwiczenia, limit 4 s). Obserwować.
+  wynosił 1 s. Poprawione (czekanie na pojawienie się ćwiczenia, limit 4 s). Test „sets another
+  plan as primary…” raz na kilka uruchomień nie znajdował przycisku „Działania na planie” (nie
+  czekał na odświeżenie ekranu) – poprawione 2026-11-23 (`findByRole`), 6 uruchomień z rzędu OK.
+  Obserwować.
 - Test e2e zmiany kolejności klawiaturą ma krótką pauzę po „podniesieniu” elementu: biblioteka
   dnd-kit potrzebuje chwili na pomiar wierszy, zanim przyjmie strzałkę.
 - Workflow używa akcji `actions/*@v4` (`upload-pages-artifact@v3`), które GitHub oznacza jako
@@ -329,57 +374,24 @@ Uzasadnienia w `docs/ARCHITECTURE.md` (§2 „Odstępstwa”).
 
 ## Kolejne zadania
 
-### Faza 5 – Progresja (w toku)
+### Faza 6 – Historia, analityka, kalendarz, pomiary (następna)
 
-Zrobione (2026-11-17, model Opus) – logika, bez ekranów:
+Wymagania: `docs/SPEC_REMAINING.md` §10–§14 (+ Pulpit §4.3). Biblioteki do dodania w tej fazie:
+Recharts, date-fns (ładować wykresy na żądanie, żeby nie rosła paczka).
 
-- [x] `src/progression/` – czyste funkcje + testy (68 testów; razem z testami schematu sugestii przybyło 77):
-  - `kg.ts` – arytmetyka w gramach (`addKg`, `subtractKg` nie poniżej 0, `sameKg`), domyślny
-    skok 2,5 kg (`effectiveIncrement`).
-  - `betweenSessions.ts` – `assessExerciseResult` (werdykt: `top_reached`, `in_range`, `missed`,
-    `incomplete`, `rir_missing`, `rir_below_target` albo `not_evaluated` z powodem) oraz
-    `recommendNextSession(current, previousNewestFirst)` → `increase_weight` (z `changes` per
-    seria: `fromKg`, `toKg`, `plannedSetId`), `increase_reps`, `hold` (z powodem),
-    `consider_decrease`, `not_evaluated`.
-  - `failedSet.ts` – `suggestAfterFailedSet({ failedSet, measurementType, incrementKg,
-    exerciseSets })` → do dwóch opcji (`lower_weight`, potem `adjust_reps`), każda z `changes`
-    dla serii docelowej; `targetSetId` = następna oczekująca seria robocza
-    (`nextPendingWorkingSet`), `cautious` gdy brak powtórzeń, `insufficient_data`,
-    `not_applicable`.
-  - `explain.ts` – polskie teksty: `describeRecommendation`, `describeFailedSetAdvice`,
-    `describeFailedSetOption`, `SUGGESTION_DISCLAIMER`.
-- [x] Testy akceptacyjne C, D, E na poziomie reguł (`betweenSessions.test.ts`,
-      `failedSet.test.ts`), w tym dokładne teksty wyjaśnień.
-- [x] Model zapisu sugestii: `progressionSuggestionSchema` w `src/shared/domain/progression.ts`
-      (+ testy walidacji).
-- [x] `plural` przeniesiony do `src/shared/lib/plural.ts` (planText go re-eksportuje).
-- [x] Wymagania faz 5–8 zapisane w `docs/SPEC_REMAINING.md`.
-
-Do zrobienia (ekrany i baza – wystarczy Sonnet):
-
-- [ ] Schemat bazy **v4**: tabela `progressionSuggestions` (indeksy: `id, sessionId,
-      sessionExerciseId, exerciseId, sourceSetId`), nowa wersja w `src/db/schema.ts` (nie
-      edytować v1–v3), test migracji jak w `database.test.ts`.
-- [ ] Repozytorium sugestii (interfejs w `types.ts` + Dexie): zapis pokazanej sugestii,
-      `applyFailedSetOption` (w jednej transakcji: zmiana tylko serii `targetSetId`, która nadal
-      ma status `pending` – inaczej błąd; zapis decyzji `applied`), `ignore`, odczyt na żywo.
-      Przy zastosowaniu opcji ciężaru wyczyścić też wpisany wcześniej `actualWeightKg` serii
-      docelowej tylko jeśli był równy staremu planowi – do decyzji przy implementacji.
-- [ ] Repozytorium sesji: wczytanie poprzednich zakończonych wyników ćwiczenia (najnowsze
-      najpierw) jako `ExerciseResult[]` dla `recommendNextSession` (wzór: `getPreviousResult`).
-- [ ] Trening: po oznaczeniu serii jako nieudanej pokazać kartę sugestii (tekst z
-      `describeFailedSetAdvice` + `SUGGESTION_DISCLAIMER`, przyciski opcji i „Zignoruj”).
-      Bez `targetSetId` – bez przycisków „Zastosuj”, tylko informacja.
-- [ ] Podsumowanie treningu: sekcja „Sugestie na następny trening” dla każdego ćwiczenia
-      (`describeRecommendation`); „Zastosuj w planie” tylko dla `increase_weight` /
-      `consider_decrease` z `plannedSetId`, po potwierdzeniu, gdy plan i serie nadal istnieją;
-      zmienia `targetWeightKg` serii planu (`planRepository.updateSet`).
-- [ ] Testy komponentowe i e2e scenariuszy C, D, E (przez UI) + sprawdzenie, że nic nie
-      zmienia się bez kliknięcia.
-- [ ] Aktualizacja `docs/ARCHITECTURE.md` (tabela przypadków brzegowych 13–15) i tego pliku.
-- [ ] Ustabilizować test `src/plans/plans.test.tsx` „sets another plan as primary, archives…”:
-      ok. 1 na 4 uruchomienia nie znajduje przycisku „Działania na planie” (wyścig z odświeżeniem
-      listy po zapisie). Niezwiązane z progresją; wykryte 2026-11-17.
+- [ ] Historia: lista zakończonych treningów (data, nazwa, czas, liczba ćwiczeń, objętość
+      robocza, rekordy), filtry (zakres dat, plan, rodzaj, ćwiczenie), szczegóły sesji.
+- [ ] Edycja historycznej sesji z ostrzeżeniem; statystyki liczone z zapisanych danych, więc
+      aktualne po edycji (test I). Uwaga: sugestie progresji zapisane dla edytowanej sesji
+      (`progressionSuggestions`) zachowują treść z chwili pokazania.
+- [ ] Statystyki ogólne i ćwiczenia, wykresy z zakresami czasu, rekordy osobiste (5 rodzajów,
+      e1RM wg Epleya 1–10 powt., oznaczone jako szacunek), rekordy i porównanie z poprzednim
+      treningiem w podsumowaniu treningu.
+- [ ] Kalendarz miesięczny (dni z treningiem, zaplanowane, dzisiaj; wiele treningów dziennie).
+- [ ] Pomiary ciała (ekran, wykresy masy i obwodów, edycja i usuwanie).
+- [ ] Pulpit §4.3: treningi w tygodniu, ostatni trening, rekordy, progres, mini kalendarz,
+      ostatni pomiar – z pustymi stanami zamiast fikcyjnych liczb.
+- [ ] Test akceptacyjny I; aktualizacja `docs/ARCHITECTURE.md` (przypadki 17, 27, 28).
 
 ### Później
 

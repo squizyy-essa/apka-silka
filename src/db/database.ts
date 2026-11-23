@@ -7,6 +7,7 @@ import type {
   PlanDay,
   PlannedExercise,
   PlannedSet,
+  ProgressionSuggestion,
   RestTimerState,
   SessionExercise,
   SessionSet,
@@ -36,6 +37,7 @@ export class TrainingDatabase extends Dexie {
   plannedExercises!: Table<PlannedExercise, string>;
   plannedSets!: Table<PlannedSet, string>;
   supersetGroups!: Table<SupersetGroup, string>;
+  progressionSuggestions!: Table<ProgressionSuggestion, string>;
   workoutSessions!: Table<WorkoutSession, string>;
   sessionExercises!: Table<SessionExercise, string>;
   sessionSets!: Table<SessionSet, string>;

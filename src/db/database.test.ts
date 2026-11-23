@@ -57,6 +57,7 @@ describe('TrainingDatabase', () => {
         'planDays',
         'plannedExercises',
         'plannedSets',
+        'progressionSuggestions',
         'restTimerState',
         'sessionExercises',
         'sessionSets',
@@ -67,6 +68,23 @@ describe('TrainingDatabase', () => {
     );
     expect(db.verno).toBe(CURRENT_SCHEMA_VERSION);
     db.close();
+  });
+
+  it('upgrades a version 3 database to version 4 and keeps its data', async () => {
+    const name = nextDatabaseName();
+    const bench = sampleExercise('Wyciskanie sztangi');
+
+    const old = new TrainingDatabase(name, SCHEMA_VERSIONS.slice(0, 3));
+    await old.exercises.add(bench);
+    expect(old.tables.map((table) => table.name)).not.toContain('progressionSuggestions');
+    old.close();
+
+    const upgraded = new TrainingDatabase(name);
+    await upgraded.open();
+    expect(upgraded.verno).toBe(4);
+    expect(await upgraded.exercises.get(bench.id)).toEqual(bench);
+    expect(await upgraded.progressionSuggestions.count()).toBe(0);
+    upgraded.close();
   });
 
   it('keeps data after the connection is closed and the database is opened again', async () => {

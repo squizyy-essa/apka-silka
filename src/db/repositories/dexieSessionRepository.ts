@@ -536,6 +536,38 @@ export function createDexieSessionRepository(db: TrainingDatabase): SessionRepos
       }
     },
 
+    async getExerciseHistory(exerciseId, startedBefore, limit) {
+      try {
+        return await db.transaction('r', sessionTables, async () => {
+          const occurrences = await db.sessionExercises
+            .where('exerciseId')
+            .equals(exerciseId)
+            .toArray();
+          const found = [];
+          for (const exercise of occurrences) {
+            const session = await db.workoutSessions.get(exercise.sessionId);
+            if (
+              session !== undefined &&
+              session.status === 'completed' &&
+              session.startedAt < startedBefore
+            ) {
+              found.push({ session, exercise });
+            }
+          }
+          found.sort((a, b) => b.session.startedAt.localeCompare(a.session.startedAt));
+          return Promise.all(
+            found.slice(0, Math.max(0, limit)).map(async ({ session, exercise }) => ({
+              session,
+              exercise,
+              sets: await setsOf(exercise.id),
+            })),
+          );
+        });
+      } catch (error) {
+        rethrow(error);
+      }
+    },
+
     async getLastCompletedDayId(planId) {
       try {
         const sessions = await db.workoutSessions.where('sourcePlanId').equals(planId).toArray();

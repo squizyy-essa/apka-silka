@@ -118,7 +118,9 @@ export type PlanRuleViolation =
   /** There is no following exercise to form a superset with. */
   | 'no-next-exercise'
   /** The submitted order does not match the stored items (changed elsewhere meanwhile). */
-  | 'stale-order';
+  | 'stale-order'
+  /** The plan's weight was changed since the workout, so the suggestion no longer fits. */
+  | 'plan-changed';
 
 /** A requested change to a training plan is not possible. Nothing was written. */
 export class PlanRuleError extends Error {
@@ -145,7 +147,13 @@ export type SessionRuleViolation =
   /** The exercise already has recorded sets, so it cannot be swapped or removed. */
   | 'has-results'
   /** The submitted order does not match the stored exercises. */
-  | 'stale-order';
+  | 'stale-order'
+  /** The suggestion no longer matches the recorded sets (they were edited meanwhile). */
+  | 'suggestion-outdated'
+  /** There is no later working set that is still pending, so nothing can be changed. */
+  | 'no-target-set'
+  /** The user already applied or ignored this suggestion. */
+  | 'suggestion-decided';
 
 /** A requested change to a workout session is not possible. Nothing was written. */
 export class SessionRuleError extends Error {

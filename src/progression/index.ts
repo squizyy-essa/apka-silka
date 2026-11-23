@@ -6,3 +6,5 @@ export * from './kg';
 export * from './betweenSessions';
 export * from './failedSet';
 export * from './explain';
+export * from './planChanges';
+export * from './fromSession';

@@ -1,4 +1,4 @@
-import { SessionRuleError, storageErrorMessage, toStorageError, ValidationError } from '@/db';
+import { PlanRuleError, SessionRuleError, storageErrorMessage, toStorageError, ValidationError } from '@/db';
 import type { MeasurementType, SessionSet } from '@/shared/domain';
 import { formatNumber } from '@/shared/lib/numberInput';
 
@@ -23,9 +23,18 @@ const RULE_MESSAGES: Readonly<Record<SessionRuleError['violation'], string>> = {
   'has-results':
     'To ćwiczenie ma już zapisane serie, więc nie można go zamienić ani usunąć. Możesz je pominąć.',
   'stale-order': 'Lista zmieniła się w międzyczasie. Spróbuj ponownie.',
+  'suggestion-outdated':
+    'Wyniki tej serii zmieniły się od momentu pokazania sugestii. Sprawdź ją jeszcze raz.',
+  'no-target-set': 'Nie ma już kolejnej oczekującej serii roboczej, którą można zmienić.',
+  'suggestion-decided': 'Ta sugestia została już zastosowana lub zignorowana.',
 };
 
 export function sessionErrorMessage(error: unknown): string {
+  if (error instanceof PlanRuleError) {
+    return error.violation === 'plan-changed'
+      ? 'Ciężar w planie zmienił się od tego treningu, więc sugestia już nie pasuje. Nic nie zmieniono.'
+      : 'Tej serii lub ćwiczenia nie ma już w planie. Nic nie zmieniono.';
+  }
   if (error instanceof SessionRuleError) {
     return error.missing ? MISSING_MESSAGES[error.missing] : RULE_MESSAGES[error.violation];
   }

@@ -20,7 +20,7 @@ function renderApp(databaseName: string, initialPath: string) {
 }
 
 /** A plan "PPL" with day "Push": bench press 3 × 8–12 @ 60 kg RIR 2 (rest 120 s) and flyes. */
-async function seedPlan(databaseName: string) {
+async function seedPlan(databaseName: string, reps: readonly [number, number] = [8, 12]) {
   const runtime = await createAppRuntime({ databaseName });
   const { plans } = runtime.repositories;
   const plan = await plans.createPlan({ name: 'PPL', scheduleMode: 'flexible' });
@@ -28,7 +28,7 @@ async function seedPlan(databaseName: string) {
   await plans.addExercise(day.id, BENCH?.id ?? '', { restSeconds: 120 });
   await plans.addExercise(day.id, FLY?.id ?? '', { restSeconds: 60 });
   for (const set of (await plans.getDay(day.id))?.exercises[0]?.sets ?? []) {
-    await plans.updateSet(set.id, { targetWeightKg: 60, targetRepsMin: 8, targetRepsMax: 12, targetRIR: 2 });
+    await plans.updateSet(set.id, { targetWeightKg: 60, targetRepsMin: reps[0], targetRepsMax: reps[1], targetRIR: 2 });
   }
   await plans.addDay(plan.id, 'Pull');
   runtime.dispose();
@@ -362,5 +362,221 @@ describe('dashboard', () => {
 
     await user.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Wznów' }));
     expect(await screen.findByRole('heading', { level: 1, name: 'Push' })).toBeInTheDocument();
+  });
+
+});
+
+const benchWeights = (sets: readonly { plannedWeightKg?: number | undefined }[]) =>
+  sets.flatMap((set) => set.plannedWeightKg ?? []);
+
+describe('acceptance test E: failed set suggestions', () => {
+  /** Plan 3 × 12 at 60 kg; the first set is done as 60 kg × 9 and marked as failed. */
+  async function failFirstSet() {
+    const user = userEvent.setup();
+    const databaseName = nextDatabaseName();
+    await seedPlan(databaseName, [12, 12]);
+    renderApp(databaseName, '/trening');
+    await user.click(await screen.findByRole('button', { name: 'Rozpocznij: Push' }));
+    const card = await benchCard();
+    await typeInto(user, setRow(card, 1).getByRole('textbox', { name: 'kg' }), '60');
+    await typeInto(user, setRow(card, 1).getByRole('textbox', { name: 'Powt.' }), '9');
+    await user.click(setRow(card, 1).getByRole('button', { name: 'Więcej działań: seria 1' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Oznacz jako nieudaną' }));
+    const suggestion = within(
+      await screen.findByRole('region', {
+        name: `Sugestia po nieudanej serii 1: ${BENCH?.name ?? ''}`,
+      }),
+    );
+    return { user, databaseName, card, suggestion };
+  }
+
+  it('shows two options with reasons and changes nothing by itself', async () => {
+    const { databaseName, card, suggestion } = await failFirstSet();
+
+    expect(suggestion.getByText(/Plan: 60 kg × 12\. Wykonano: 60 kg × 9 \(3 powtórzenia mniej\)/)).toBeInTheDocument();
+    expect(suggestion.getByText('Zmniejsz ciężar do 57,5 kg')).toBeInTheDocument();
+    expect(suggestion.getByText('Zostań przy 60 kg, cel 9 powtórzeń')).toBeInTheDocument();
+    expect(suggestion.getAllByRole('listitem')).toHaveLength(2);
+    expect(suggestion.getByText(/nie gwarantuje wyniku i nic nie zmieni się bez Twojej decyzji/)).toBeInTheDocument();
+
+    // The next sets still have their original plan, in the screen and in the database.
+    expect(setRow(card, 2).getByText('Plan: 60 kg × 12, RIR 2')).toBeInTheDocument();
+    const probe = new TrainingDatabase(databaseName);
+    expect(benchWeights(await probe.sessionSets.toArray())).toEqual([60, 60, 60]);
+    expect(await probe.progressionSuggestions.count()).toBe(0);
+    probe.close();
+  });
+
+  it('applies the weight option to the next pending set only', async () => {
+    const { user, databaseName, card, suggestion } = await failFirstSet();
+
+    await user.click(
+      suggestion.getByRole('button', { name: 'Zastosuj: Zmniejsz ciężar do 57,5 kg (seria 2)' }),
+    );
+
+    expect(await setRow(card, 2).findByText('Plan: 57,5 kg × 12, RIR 2')).toBeInTheDocument();
+    expect(setRow(card, 3).getByText('Plan: 60 kg × 12, RIR 2')).toBeInTheDocument();
+    expect(setRow(card, 1).getByText('Nieudana')).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByRole('region', { name: /Sugestia po nieudanej serii/ })).not.toBeInTheDocument(),
+    );
+    const probe = new TrainingDatabase(databaseName);
+    expect(benchWeights(await probe.sessionSets.toArray()).sort()).toEqual([57.5, 60, 60]);
+    expect(await probe.progressionSuggestions.toArray()).toMatchObject([
+      { source: 'failed_set', decision: 'applied', chosenOptionIndex: 0 },
+    ]);
+    probe.close();
+  });
+
+  it('applies the reps option to the next pending set', async () => {
+    const first = await failFirstSet();
+    await first.user.click(
+      first.suggestion.getByRole('button', { name: 'Zastosuj: Zostań przy 60 kg, cel 9 powtórzeń (seria 2)' }),
+    );
+    expect(await setRow(first.card, 2).findByText('Plan: 60 kg × 9, RIR 2')).toBeInTheDocument();
+  });
+
+  it('ignoring leaves every set as planned and hides the card', async () => {
+    const { user, databaseName, card, suggestion } = await failFirstSet();
+
+    await user.click(suggestion.getByRole('button', { name: 'Zignoruj sugestię po serii 1' }));
+
+    await waitFor(() =>
+      expect(screen.queryByRole('region', { name: /Sugestia po nieudanej serii/ })).not.toBeInTheDocument(),
+    );
+    expect(setRow(card, 2).getByText('Plan: 60 kg × 12, RIR 2')).toBeInTheDocument();
+    const probe = new TrainingDatabase(databaseName);
+    expect(benchWeights(await probe.sessionSets.toArray())).toEqual([60, 60, 60]);
+    expect(await probe.progressionSuggestions.toArray()).toMatchObject([{ decision: 'ignored' }]);
+    probe.close();
+  });
+});
+
+describe('failed set suggestions in the cards view', () => {
+  it('shows the same suggestion and applies it to the next set', async () => {
+    const user = userEvent.setup();
+    const databaseName = nextDatabaseName();
+    await seedPlan(databaseName, [12, 12]);
+    renderApp(databaseName, '/trening');
+    await user.click(await screen.findByRole('button', { name: 'Rozpocznij: Push' }));
+    await user.click(await screen.findByRole('radio', { name: 'Karty' }));
+    const single = within(await screen.findByRole('region', { name: `${BENCH?.name ?? ''}, seria 1` }));
+    await typeInto(user, single.getByRole('textbox', { name: 'kg' }), '60');
+    await typeInto(user, single.getByRole('textbox', { name: 'Powt.' }), '9');
+
+    await user.click(single.getByRole('button', { name: 'Nieudana' }));
+
+    const suggestion = within(
+      await screen.findByRole('region', { name: `Sugestia po nieudanej serii 1: ${BENCH?.name ?? ''}` }),
+    );
+    await user.click(
+      suggestion.getByRole('button', { name: 'Zastosuj: Zmniejsz ciężar do 57,5 kg (seria 2)' }),
+    );
+
+    // The cards view moved on to the next pending set, which now has the lighter plan.
+    const next = within(await screen.findByRole('region', { name: `${BENCH?.name ?? ''}, seria 2` }));
+    expect(await next.findByText('Plan: 57,5 kg × 12, RIR 2')).toBeInTheDocument();
+  });
+});
+
+/** Does bench sets 1–3 with the given reps (60 kg, RIR 2), then finishes the workout. */
+async function finishBenchWith(user: UserEvent, repsPerSet: readonly [number, number, number]) {
+  const card = await benchCard();
+  for (const [index, reps] of repsPerSet.entries()) {
+    const number = index + 1;
+    const row = setRow(card, number);
+    await typeInto(user, row.getByRole('textbox', { name: 'kg' }), '60');
+    await typeInto(user, row.getByRole('textbox', { name: 'Powt.' }), String(reps));
+    await typeInto(user, row.getByRole('textbox', { name: 'RIR' }), '2');
+    await user.click(row.getByRole('button', { name: `Oznacz serię ${number} jako wykonaną` }));
+    await row.findByText('Wykonana');
+  }
+  await user.click(screen.getByRole('button', { name: 'Zakończ trening' }));
+  const dialog = within(await screen.findByRole('dialog', { name: 'Zakończyć trening?' }));
+  await user.click(dialog.getByRole('button', { name: 'Zakończ i zapisz' }));
+  return within(await screen.findByRole('region', { name: /Sugestie na następny trening/ }));
+}
+
+const planBenchWeights = async (databaseName: string) => {
+  const probe = new TrainingDatabase(databaseName);
+  const weights = (await probe.plannedSets.toArray()).map((set) => set.targetWeightKg);
+  probe.close();
+  return weights.flatMap((weight) => weight ?? []);
+};
+
+describe('acceptance tests C and D: suggestions after the workout', () => {
+  it('C: 12/12/12 at RIR 2 suggests 62.5 kg and changes the plan only after confirmation', async () => {
+    const user = userEvent.setup();
+    const databaseName = nextDatabaseName();
+    await seedPlan(databaseName);
+    renderApp(databaseName, '/trening');
+    await user.click(await screen.findByRole('button', { name: 'Rozpocznij: Push' }));
+
+    const suggestions = await finishBenchWith(user, [12, 12, 12]);
+
+    const item = within(await suggestions.findByRole('listitem', { name: `Sugestia: ${BENCH?.name ?? ''}` }));
+    expect(item.getByText('Zwiększ ciężar')).toBeInTheDocument();
+    expect(
+      item.getByText('W 3 seriach osiągnąłeś 12 powtórzeń przy RIR 2. Możesz spróbować zwiększyć ciężar z 60 do 62,5 kg.'),
+    ).toBeInTheDocument();
+    // Showing the suggestion changed nothing.
+    expect(await planBenchWeights(databaseName)).toEqual([60, 60, 60]);
+
+    await user.click(item.getByRole('button', { name: `Zastosuj w planie: ${BENCH?.name ?? ''}` }));
+    const dialog = within(await screen.findByRole('alertdialog', { name: 'Zmienić plan?' }));
+    expect(dialog.getByText(/dla 3 serii: 60 → 62,5 kg/)).toBeInTheDocument();
+    // Cancelling changes nothing either.
+    await user.click(dialog.getByRole('button', { name: 'Anuluj' }));
+    expect(await planBenchWeights(databaseName)).toEqual([60, 60, 60]);
+
+    await user.click(item.getByRole('button', { name: `Zastosuj w planie: ${BENCH?.name ?? ''}` }));
+    await user.click(
+      within(await screen.findByRole('alertdialog', { name: 'Zmienić plan?' })).getByRole('button', {
+        name: 'Zmień plan',
+      }),
+    );
+
+    expect(await item.findByText('Zastosowano w planie')).toBeInTheDocument();
+    expect(item.queryByRole('button', { name: /Zastosuj w planie/ })).not.toBeInTheDocument();
+    expect(await planBenchWeights(databaseName)).toEqual([62.5, 62.5, 62.5]);
+    // The recorded workout keeps what was really done.
+    const probe = new TrainingDatabase(databaseName);
+    expect(
+      (await probe.sessionSets.toArray()).flatMap((set) => (set.actualWeightKg === undefined ? [] : [set.actualWeightKg])),
+    ).toEqual([60, 60, 60]);
+    probe.close();
+  });
+
+  it('D: 12/11/10 gives no weight increase, only advice to work on reps', async () => {
+    const user = userEvent.setup();
+    const databaseName = nextDatabaseName();
+    await seedPlan(databaseName);
+    renderApp(databaseName, '/trening');
+    await user.click(await screen.findByRole('button', { name: 'Rozpocznij: Push' }));
+
+    const suggestions = await finishBenchWith(user, [12, 11, 10]);
+
+    const item = within(await suggestions.findByRole('listitem', { name: `Sugestia: ${BENCH?.name ?? ''}` }));
+    expect(item.getByText('Spróbuj zwiększyć powtórzenia')).toBeInTheDocument();
+    expect(item.getByText(/Wykonane powtórzenia przy 60 kg: 12, 11, 10/)).toBeInTheDocument();
+    expect(item.queryByText('Zwiększ ciężar')).not.toBeInTheDocument();
+    expect(item.queryByRole('button')).not.toBeInTheDocument();
+    expect(await planBenchWeights(databaseName)).toEqual([60, 60, 60]);
+  });
+
+  it('ignoring is remembered and leaves the plan as it is', async () => {
+    const user = userEvent.setup();
+    const databaseName = nextDatabaseName();
+    await seedPlan(databaseName);
+    renderApp(databaseName, '/trening');
+    await user.click(await screen.findByRole('button', { name: 'Rozpocznij: Push' }));
+    const suggestions = await finishBenchWith(user, [12, 12, 12]);
+    const item = within(await suggestions.findByRole('listitem', { name: `Sugestia: ${BENCH?.name ?? ''}` }));
+
+    await user.click(item.getByRole('button', { name: `Zignoruj sugestię: ${BENCH?.name ?? ''}` }));
+
+    expect(await item.findByText('Zignorowano')).toBeInTheDocument();
+    expect(item.queryByRole('button')).not.toBeInTheDocument();
+    expect(await planBenchWeights(databaseName)).toEqual([60, 60, 60]);
   });
 });

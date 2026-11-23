@@ -22,6 +22,7 @@ import { WORKOUT_PATHS } from './paths';
 import { RestTimerBar } from './RestTimerBar';
 import { SessionExerciseCard } from './SessionExerciseCard';
 import { unlockAudio } from './sound';
+import { useSessionSuggestions } from './useSessionSuggestions';
 import { sessionErrorMessage } from './workoutText';
 
 const VIEW_OPTIONS: readonly { value: WorkoutView; label: string }[] = [
@@ -40,11 +41,13 @@ function ElapsedTime({ startedAt }: { readonly startedAt: string }) {
 
 /** The workout in progress. Every change is stored at once; nothing here lives only in memory. */
 export function ActiveWorkout({ detail }: { readonly detail: SessionDetail }) {
-  const { sessions } = useRepositories();
+  const { sessions, suggestions } = useRepositories();
   const { settings, updateSettings } = useSettings();
   const navigate = useNavigate();
   const { error, run } = useSaveGuard(sessionErrorMessage);
   const { session, exercises } = detail;
+  const observedDecisions = useSessionSuggestions(session.id);
+  const decisions = observedDecisions.status === 'ready' ? observedDecisions.value : null;
   const viewLabelId = useId();
   const [picking, setPicking] = useState(false);
   const [finishing, setFinishing] = useState(false);
@@ -133,6 +136,8 @@ export function ActiveWorkout({ detail }: { readonly detail: SessionDetail }) {
           exercises={exercises}
           supersetLabels={labels}
           repository={sessions}
+          suggestions={suggestions}
+          decisions={decisions}
           run={run}
           onFinishSet={finishSet}
         />
@@ -153,6 +158,8 @@ export function ActiveWorkout({ detail }: { readonly detail: SessionDetail }) {
                     : labels.get(item.exercise.supersetGroupId)
                 }
                 repository={sessions}
+                suggestions={suggestions}
+                decisions={decisions}
                 run={run}
                 onFinishSet={finishSet}
                 onMove={(direction) => {

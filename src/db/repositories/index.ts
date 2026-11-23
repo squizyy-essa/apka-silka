@@ -3,6 +3,7 @@ import { createDexieExerciseRepository } from './dexieExerciseRepository';
 import { createDexiePlanRepository } from './dexiePlanRepository';
 import { createDexieSessionRepository } from './dexieSessionRepository';
 import { createDexieSettingsRepository } from './dexieSettingsRepository';
+import { createDexieSuggestionRepository } from './dexieSuggestionRepository';
 import type { Repositories } from './types';
 
 export { createDexieEntityRepository } from './dexieEntityRepository';
@@ -10,11 +11,17 @@ export { createDexieExerciseRepository, syncSystemExercises } from './dexieExerc
 export { createDexiePlanRepository } from './dexiePlanRepository';
 export { createDexieSessionRepository } from './dexieSessionRepository';
 export { createDexieSettingsRepository, normalizeSettings } from './dexieSettingsRepository';
+export { createDexieSuggestionRepository } from './dexieSuggestionRepository';
 export type {
   DayDetail,
   DayPatch,
   EntityRepository,
   ExerciseDraft,
+  ExerciseOccurrence,
+  FailedSetOptionKind,
+  PlanSuggestionInput,
+  PlanWeightChangeInput,
+  SuggestionRepository,
   ExerciseImageChange,
   ExerciseRepository,
   PlanDraft,
@@ -39,5 +46,6 @@ export function createRepositories(db: TrainingDatabase): Repositories {
     exercises: createDexieExerciseRepository(db),
     plans: createDexiePlanRepository(db),
     sessions: createDexieSessionRepository(db),
+    suggestions: createDexieSuggestionRepository(db),
   };
 }
