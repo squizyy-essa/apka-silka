@@ -4,7 +4,7 @@ import type {
   RestTimerState,
   SessionExercise,
   SessionSet,
-} from '@/shared/domain';
+} from "@/shared/domain";
 
 /**
  * Rules of a workout in progress. Pure functions: no database, no React,
@@ -18,13 +18,20 @@ export interface SessionExerciseWithSets {
 
 // ---------------------------------------------------------------- results
 
-export type MissingResult = 'weight' | 'reps' | 'duration' | 'distance';
+export type MissingResult = "weight" | "reps" | "duration" | "distance";
 
 export type CompletionResult =
   | {
       readonly ok: true;
       readonly values: Partial<
-        Pick<SessionSet, 'actualWeightKg' | 'actualReps' | 'durationSeconds' | 'distanceMeters'>
+        Pick<
+          SessionSet,
+          | "actualWeightKg"
+          | "actualReps"
+          | "actualRIR"
+          | "durationSeconds"
+          | "distanceMeters"
+        >
       >;
     }
   | { readonly ok: false; readonly missing: MissingResult };
@@ -40,41 +47,53 @@ export type CompletionResult =
 export function resultForCompletion(
   set: SessionSet,
   measurementType: MeasurementType,
+  previous?: SessionSet,
 ): CompletionResult {
-  const weight = set.actualWeightKg ?? set.plannedWeightKg;
+  const weight =
+    set.actualWeightKg ?? previous?.actualWeightKg ?? set.plannedWeightKg;
   const fixedReps =
-    set.plannedRepsMin !== undefined && set.plannedRepsMin === set.plannedRepsMax
+    set.plannedRepsMin !== undefined &&
+    set.plannedRepsMin === set.plannedRepsMax
       ? set.plannedRepsMin
       : undefined;
-  const reps = set.actualReps ?? fixedReps;
+  const reps = set.actualReps ?? previous?.actualReps ?? fixedReps;
+  const rir = set.actualRIR ?? previous?.actualRIR;
+  const rirValue = rir === undefined ? {} : { actualRIR: rir };
 
   switch (measurementType) {
-    case 'weight_reps':
+    case "weight_reps":
       if (weight === undefined) {
-        return { ok: false, missing: 'weight' };
+        return { ok: false, missing: "weight" };
       }
       if (reps === undefined) {
-        return { ok: false, missing: 'reps' };
-      }
-      return { ok: true, values: { actualWeightKg: weight, actualReps: reps } };
-    case 'bodyweight_reps':
-      if (reps === undefined) {
-        return { ok: false, missing: 'reps' };
+        return { ok: false, missing: "reps" };
       }
       return {
         ok: true,
-        values: { actualReps: reps, ...(weight === undefined ? {} : { actualWeightKg: weight }) },
+        values: { actualWeightKg: weight, actualReps: reps, ...rirValue },
       };
-    case 'duration': {
+    case "bodyweight_reps":
+      if (reps === undefined) {
+        return { ok: false, missing: "reps" };
+      }
+      return {
+        ok: true,
+        values: {
+          actualReps: reps,
+          ...rirValue,
+          ...(weight === undefined ? {} : { actualWeightKg: weight }),
+        },
+      };
+    case "duration": {
       const seconds = set.durationSeconds ?? set.plannedDurationSeconds;
       return seconds === undefined
-        ? { ok: false, missing: 'duration' }
+        ? { ok: false, missing: "duration" }
         : { ok: true, values: { durationSeconds: seconds } };
     }
-    case 'distance': {
+    case "distance": {
       const meters = set.distanceMeters ?? set.plannedDistanceMeters;
       return meters === undefined
-        ? { ok: false, missing: 'distance' }
+        ? { ok: false, missing: "distance" }
         : {
             ok: true,
             values: {
@@ -86,9 +105,36 @@ export function resultForCompletion(
   }
 }
 
+/**
+ * The set whose result is offered as the starting point for `set`: the
+ * nearest earlier completed set of the same type in the same exercise.
+ * Only for weight/reps exercises; time and distance are never carried over.
+ */
+export function previousCompletedSet(
+  sets: readonly SessionSet[],
+  set: SessionSet,
+  measurementType: MeasurementType,
+): SessionSet | undefined {
+  if (
+    measurementType !== "weight_reps" &&
+    measurementType !== "bodyweight_reps"
+  ) {
+    return undefined;
+  }
+  const index = sets.findIndex((candidate) => candidate.id === set.id);
+  return sets
+    .slice(0, Math.max(index, 0))
+    .reverse()
+    .find(
+      (candidate) =>
+        candidate.status === "completed" && candidate.type === set.type,
+    );
+}
+
 // ----------------------------------------------------------------- volume
 
-const isDone = (set: SessionSet) => set.status === 'completed' || set.status === 'failed';
+const isDone = (set: SessionSet) =>
+  set.status === "completed" || set.status === "failed";
 
 /** weight × reps in kg, computed in grams to avoid floating-point drift (62.5 × 3 = 187.5). */
 function setVolumeKg(set: SessionSet): number {
@@ -104,18 +150,20 @@ function setVolumeKg(set: SessionSet): number {
  * skipped and pending sets, skipped exercises, and time/distance exercises
  * are excluded. Body-weight sets count only their external load, if any.
  */
-export function workingVolumeKg(exercises: readonly SessionExerciseWithSets[]): number {
+export function workingVolumeKg(
+  exercises: readonly SessionExerciseWithSets[],
+): number {
   let grams = 0;
   for (const { exercise, sets } of exercises) {
     if (
       exercise.isSkipped ||
-      (exercise.measurementTypeSnapshot !== 'weight_reps' &&
-        exercise.measurementTypeSnapshot !== 'bodyweight_reps')
+      (exercise.measurementTypeSnapshot !== "weight_reps" &&
+        exercise.measurementTypeSnapshot !== "bodyweight_reps")
     ) {
       continue;
     }
     for (const set of sets) {
-      if (set.type === 'working' && isDone(set)) {
+      if (set.type === "working" && isDone(set)) {
         grams += Math.round(setVolumeKg(set) * 1000);
       }
     }
@@ -133,15 +181,18 @@ export interface SessionTotals {
   readonly workingVolumeKg: number;
 }
 
-export function sessionTotals(exercises: readonly SessionExerciseWithSets[]): SessionTotals {
+export function sessionTotals(
+  exercises: readonly SessionExerciseWithSets[],
+): SessionTotals {
   const active = exercises.filter(({ exercise }) => !exercise.isSkipped);
   const done = active.flatMap(({ sets }) => sets.filter(isDone));
   return {
     exercisesDone: active.filter(({ sets }) => sets.some(isDone)).length,
     setsDone: done.length,
-    workingSetsDone: done.filter((set) => set.type === 'working').length,
-    setsPending: active.flatMap(({ sets }) => sets).filter((set) => set.status === 'pending')
-      .length,
+    workingSetsDone: done.filter((set) => set.type === "working").length,
+    setsPending: active
+      .flatMap(({ sets }) => sets)
+      .filter((set) => set.status === "pending").length,
     workingVolumeKg: workingVolumeKg(exercises),
   };
 }
@@ -160,22 +211,27 @@ export function restAfterSet(
   exercises: readonly SessionExerciseWithSets[],
   setId: string,
 ): number | null {
-  const owner = exercises.find(({ sets }) => sets.some((set) => set.id === setId));
+  const owner = exercises.find(({ sets }) =>
+    sets.some((set) => set.id === setId),
+  );
   if (owner === undefined) {
     return null;
   }
   const groupId = owner.exercise.supersetGroupId;
   if (groupId === undefined) {
-    return owner.exercise.restSecondsSnapshot > 0 ? owner.exercise.restSecondsSnapshot : null;
+    return owner.exercise.restSecondsSnapshot > 0
+      ? owner.exercise.restSecondsSnapshot
+      : null;
   }
 
   const round = owner.sets.findIndex((set) => set.id === setId);
   const members = exercises.filter(
-    ({ exercise }) => exercise.supersetGroupId === groupId && !exercise.isSkipped,
+    ({ exercise }) =>
+      exercise.supersetGroupId === groupId && !exercise.isSkipped,
   );
   const roundFinished = members.every(({ sets }) => {
     const set = sets[round];
-    return set === undefined || set.status !== 'pending';
+    return set === undefined || set.status !== "pending";
   });
   const rest = owner.exercise.supersetRestSecondsSnapshot ?? 0;
   return roundFinished && rest > 0 ? rest : null;
@@ -189,22 +245,27 @@ export function nextPendingSet(
   for (const [index, { exercise, sets }] of active.entries()) {
     const groupId = exercise.supersetGroupId;
     if (groupId === undefined) {
-      const pending = sets.find((set) => set.status === 'pending');
+      const pending = sets.find((set) => set.status === "pending");
       if (pending) {
         return { exerciseId: exercise.id, setId: pending.id };
       }
       continue;
     }
     // Handle a whole superset when its first member is reached: round by round.
-    if (active.findIndex((item) => item.exercise.supersetGroupId === groupId) !== index) {
+    if (
+      active.findIndex((item) => item.exercise.supersetGroupId === groupId) !==
+      index
+    ) {
       continue;
     }
-    const members = active.filter((item) => item.exercise.supersetGroupId === groupId);
+    const members = active.filter(
+      (item) => item.exercise.supersetGroupId === groupId,
+    );
     const rounds = Math.max(...members.map((member) => member.sets.length));
     for (let round = 0; round < rounds; round += 1) {
       for (const member of members) {
         const set = member.sets[round];
-        if (set?.status === 'pending') {
+        if (set?.status === "pending") {
           return { exerciseId: member.exercise.id, setId: set.id };
         }
       }
@@ -217,55 +278,78 @@ export function nextPendingSet(
 
 /** All timer maths is based on timestamps, so it stays right after the app was in the background. */
 
-export function startRestTimer(sessionId: string, seconds: number, now: Date): RestTimerState {
+export function startRestTimer(
+  sessionId: string,
+  seconds: number,
+  now: Date,
+): RestTimerState {
   return {
     sessionId,
     startedAt: now.toISOString(),
     endsAt: new Date(now.getTime() + seconds * 1000).toISOString(),
-    status: 'running',
+    status: "running",
   };
 }
 
 export function remainingRestMs(timer: RestTimerState, now: Date): number {
-  if (timer.status === 'paused') {
+  if (timer.status === "paused") {
     return timer.remainingMsWhenPaused ?? 0;
   }
-  if (timer.status === 'finished') {
+  if (timer.status === "finished") {
     return 0;
   }
   return Math.max(0, new Date(timer.endsAt).getTime() - now.getTime());
 }
 
-export function pauseRestTimer(timer: RestTimerState, now: Date): RestTimerState {
-  if (timer.status !== 'running') {
+export function pauseRestTimer(
+  timer: RestTimerState,
+  now: Date,
+): RestTimerState {
+  if (timer.status !== "running") {
     return timer;
   }
-  return { ...timer, status: 'paused', remainingMsWhenPaused: remainingRestMs(timer, now) };
+  return {
+    ...timer,
+    status: "paused",
+    remainingMsWhenPaused: remainingRestMs(timer, now),
+  };
 }
 
-export function resumeRestTimer(timer: RestTimerState, now: Date): RestTimerState {
-  if (timer.status !== 'paused') {
+export function resumeRestTimer(
+  timer: RestTimerState,
+  now: Date,
+): RestTimerState {
+  if (timer.status !== "paused") {
     return timer;
   }
   return {
     sessionId: timer.sessionId,
     startedAt: timer.startedAt,
-    endsAt: new Date(now.getTime() + (timer.remainingMsWhenPaused ?? 0)).toISOString(),
-    status: 'running',
+    endsAt: new Date(
+      now.getTime() + (timer.remainingMsWhenPaused ?? 0),
+    ).toISOString(),
+    status: "running",
   };
 }
 
 /** Adds (or, with a negative value, removes) time; never goes below zero. */
-export function adjustRestTimer(timer: RestTimerState, deltaSeconds: number, now: Date): RestTimerState {
-  const remaining = Math.max(0, remainingRestMs(timer, now) + deltaSeconds * 1000);
-  if (timer.status === 'paused') {
+export function adjustRestTimer(
+  timer: RestTimerState,
+  deltaSeconds: number,
+  now: Date,
+): RestTimerState {
+  const remaining = Math.max(
+    0,
+    remainingRestMs(timer, now) + deltaSeconds * 1000,
+  );
+  if (timer.status === "paused") {
     return { ...timer, remainingMsWhenPaused: remaining };
   }
   return {
     sessionId: timer.sessionId,
     startedAt: timer.startedAt,
     endsAt: new Date(now.getTime() + remaining).toISOString(),
-    status: 'running',
+    status: "running",
   };
 }
 
@@ -274,9 +358,9 @@ export function formatClock(ms: number): string {
   const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = String(totalSeconds % 60).padStart(2, '0');
+  const seconds = String(totalSeconds % 60).padStart(2, "0");
   return hours > 0
-    ? `${hours}:${String(minutes).padStart(2, '0')}:${seconds}`
+    ? `${hours}:${String(minutes).padStart(2, "0")}:${seconds}`
     : `${minutes}:${seconds}`;
 }
 
@@ -290,7 +374,7 @@ export function formatClock(ms: number): string {
  * @param isoWeekday today's weekday, 1 (Monday) – 7 (Sunday)
  */
 export function suggestNextDay(
-  scheduleMode: 'fixed' | 'flexible',
+  scheduleMode: "fixed" | "flexible",
   days: readonly PlanDay[],
   lastCompletedDayId: string | undefined,
   isoWeekday: number,
@@ -298,7 +382,7 @@ export function suggestNextDay(
   if (days.length === 0) {
     return undefined;
   }
-  if (scheduleMode === 'flexible') {
+  if (scheduleMode === "flexible") {
     const last = days.findIndex((day) => day.id === lastCompletedDayId);
     return days[(last + 1) % days.length];
   }

@@ -402,3 +402,7 @@ Fazy 6–8 według tabeli w `docs/ARCHITECTURE.md` §6.
 - [x] Włączyć GitHub Pages (zrobione 2026-11-16; każdy push do `main` publikuje aplikację).
 - [ ] Na iPhonie: otworzyć https://squizyy-essa.github.io/apka-silka/ w Safari → Udostępnij →
       „Dodaj do ekranu początkowego” i potwierdzić, że ikona i pełny ekran działają.
+
+## Poprawka 0.6.1 (2026-11-23)
+- Kolejna seria powtarza wynik poprzedniej wykonanej serii (kg, powt., RIR) jako widoczną podpowiedź w polach; wystarczy kliknąć „wykonana”. Wpisana wartość ma pierwszeństwo. Dotyczy ćwiczeń z ciężarem/masą ciała, tylko serii tego samego typu (rozgrzewka osobno). Czas i dystans nie są przenoszone.
+- Testy: 377 jednostkowych, 52 e2e.

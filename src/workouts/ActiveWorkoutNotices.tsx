@@ -1,15 +1,19 @@
-import * as AlertDialog from '@radix-ui/react-alert-dialog';
-import { Dumbbell } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router';
-import { useRepositories } from '@/app/repositoriesContext';
-import type { SessionDetail } from '@/db';
-import { Button } from '@/shared/ui/Button';
-import { ConfirmDialog } from '@/shared/ui/ConfirmDialog';
-import { ErrorAlert } from '@/shared/ui/states';
-import { WORKOUT_PATHS } from './paths';
-import { useActiveSession } from './useActiveSession';
-import { formatLocalDate, formatTime, sessionErrorMessage } from './workoutText';
+import * as AlertDialog from "@radix-ui/react-alert-dialog";
+import { Dumbbell } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router";
+import { useRepositories } from "@/app/repositoriesContext";
+import type { SessionDetail } from "@/db";
+import { Button } from "@/shared/ui/Button";
+import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
+import { ErrorAlert } from "@/shared/ui/states";
+import { WORKOUT_PATHS } from "./paths";
+import { useActiveSession } from "./useActiveSession";
+import {
+  formatLocalDate,
+  formatTime,
+  sessionErrorMessage,
+} from "./workoutText";
 
 /**
  * Asked once when the app starts and finds an unfinished workout
@@ -51,17 +55,24 @@ function ResumePrompt() {
               Czy chcesz wznowić trening?
             </AlertDialog.Title>
             <AlertDialog.Description className="mt-2 text-sm text-muted-foreground">
-              Masz niedokończony trening „{session.name}” rozpoczęty{' '}
-              {formatLocalDate(session.localWorkoutDate)} o {formatTime(session.startedAt)}.
-              Wszystkie zapisane serie są zachowane.
+              Masz niedokończony trening „{session.name}” rozpoczęty{" "}
+              {formatLocalDate(session.localWorkoutDate)} o{" "}
+              {formatTime(session.startedAt)}. Wszystkie zapisane serie są
+              zachowane.
             </AlertDialog.Description>
             {error !== null && (
-              <ErrorAlert title="Nie udało się porzucić treningu" className="mt-3">
+              <ErrorAlert
+                title="Nie udało się porzucić treningu"
+                className="mt-3"
+              >
                 {error}
               </ErrorAlert>
             )}
             <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              <Button variant="secondary" onClick={() => setConfirmAbandon(true)}>
+              <Button
+                variant="secondary"
+                onClick={() => setConfirmAbandon(true)}
+              >
                 Porzuć trening
               </Button>
               <Button
@@ -107,7 +118,7 @@ function ActiveWorkoutBar() {
   const active = useActiveSession();
   const { pathname } = useLocation();
   if (
-    active.status !== 'ready' ||
+    active.status !== "ready" ||
     active.value === null ||
     pathname === WORKOUT_PATHS.root
   ) {
@@ -118,9 +129,13 @@ function ActiveWorkoutBar() {
       to={WORKOUT_PATHS.root}
       className="mb-4 flex min-h-11 items-center gap-3 rounded-card border border-primary bg-primary-soft px-3 py-2 text-sm text-foreground hover:bg-surface-muted"
     >
-      <Dumbbell className="size-5 shrink-0 text-accent-text" aria-hidden="true" />
+      <Dumbbell
+        className="size-5 shrink-0 text-accent-text"
+        aria-hidden="true"
+      />
       <span className="min-w-0 flex-1">
-        <span className="font-semibold">Trening w toku:</span> {active.value.session.name}
+        <span className="font-semibold">Trening w toku:</span>{" "}
+        {active.value.session.name}
       </span>
       <span className="font-semibold text-accent-text">Wróć</span>
     </Link>
